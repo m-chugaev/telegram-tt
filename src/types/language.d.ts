@@ -419,6 +419,7 @@ export interface LangPair {
   'FilterNew': undefined;
   'FilterEdit': undefined;
   'FilterDelete': undefined;
+  'FilterEditAll': undefined;
   'FilterShare': undefined;
   'AutoDeleteConfirm': undefined;
   'LogOutTitle': undefined;

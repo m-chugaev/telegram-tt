@@ -67,4 +67,20 @@
 
     white-space: nowrap;
   }
+
+  @media (min-width: 926px) {
+    .DropdownMenu, .TabList {
+      display: none;
+    }
+
+    .DropdownMenu.no-menu {
+      display: block;
+      margin-right: 0.5rem;
+    }
+
+    .SearchInput {
+      max-width: 100%;
+      margin-left: 0;
+    }
+  }
 }

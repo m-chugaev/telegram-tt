@@ -471,6 +471,7 @@
 "FilterNew" = "New Folder";
 "FilterEdit" = "Edit folder";
 "FilterDelete" = "Delete folder";
+"FilterEditAll" = "Edit Folders";
 "FilterShare" = "Share";
 "AutoDeleteConfirm" = "Confirm";
 "LogOutTitle" = "Log Out";

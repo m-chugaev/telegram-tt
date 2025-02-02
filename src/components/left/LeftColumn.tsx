@@ -42,6 +42,7 @@ type StateProps = {
   shouldSkipHistoryAnimations?: boolean;
   currentUserId?: string;
   hasPasscode?: boolean;
+  nextContentScreen?: LeftColumnContent;
   nextSettingsScreen?: SettingsScreens;
   nextFoldersAction?: ReducerAction<FoldersActions>;
   isChatOpen: boolean;
@@ -77,6 +78,7 @@ function LeftColumn({
   currentUserId,
   hasPasscode,
   nextSettingsScreen,
+  nextContentScreen,
   nextFoldersAction,
   isChatOpen,
   isAppUpdateAvailable,
@@ -97,6 +99,7 @@ function LeftColumn({
     clearTwoFaError,
     openChat,
     requestNextSettingsScreen,
+    requestNextContentScreen,
   } = getActions();
 
   const [content, setContent] = useState<LeftColumnContent>(LeftColumnContent.ChatList);
@@ -445,10 +448,15 @@ function LeftColumn({
       requestNextSettingsScreen({ screen: undefined });
     }
 
+    if (nextContentScreen !== undefined) {
+      setContent(nextContentScreen);
+      requestNextContentScreen({ screen: undefined });
+    }
+
     if (nextFoldersAction) {
       foldersDispatch(nextFoldersAction);
     }
-  }, [foldersDispatch, nextFoldersAction, nextSettingsScreen, requestNextSettingsScreen]);
+  }, [foldersDispatch, nextFoldersAction, nextSettingsScreen, requestNextSettingsScreen, nextContentScreen, requestNextContentScreen]);
 
   const handleSettingsScreenSelect = useLastCallback((screen: SettingsScreens) => {
     setContent(LeftColumnContent.Settings);
@@ -574,6 +582,7 @@ export default memo(withGlobal<OwnProps>(
       shouldSkipHistoryAnimations,
       activeChatFolder,
       nextSettingsScreen,
+      nextContentScreen,
       nextFoldersAction,
       storyViewer: {
         isArchivedRibbonShown,
@@ -602,6 +611,7 @@ export default memo(withGlobal<OwnProps>(
       currentUserId,
       hasPasscode,
       nextSettingsScreen,
+      nextContentScreen,
       nextFoldersAction,
       isChatOpen,
       isAppUpdateAvailable,

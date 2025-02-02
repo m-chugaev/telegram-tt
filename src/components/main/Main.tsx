@@ -91,6 +91,7 @@ import SnapEffectContainer from './visualEffects/SnapEffectContainer';
 import WaveContainer from './visualEffects/WaveContainer';
 
 import './Main.scss';
+import TabsColumn from '../left/TabsColumn';
 
 export interface OwnProps {
   isMobile?: boolean;
@@ -536,6 +537,7 @@ const Main = ({
 
   return (
     <div ref={containerRef} id="Main" className={className}>
+      <TabsColumn />
       <LeftColumn ref={leftColumnRef} />
       <MiddleColumn leftColumnRef={leftColumnRef} isMobile={isMobile} />
       <RightColumn isMobile={isMobile} />
