@@ -10,4 +10,13 @@
     display: flex;
     flex-direction: column;
   }
+
+  // Forced dark theme like in contest design
+  &.dark {
+    --color-background: #212121;
+    --color-primary: #5a99ee;
+    --color-text-secondary: #717478;
+    --color-chat-hover: #2c2c2c;
+    --color-gray: #717579;
+  }
 } 

@@ -17,8 +17,10 @@ import styles from './TabsColumn.module.scss';
 import TabsHeader from './tabs/TabsHeader';
 import TabsList, { TabItem } from './tabs/TabsList';
 import { LeftColumnContent, SettingsScreens } from '../../types';
+import buildClassName from '../../util/buildClassName';
 
 type OwnProps = {
+  forceDarkTheme?: boolean;
 }
 
 type StateProps = {
@@ -44,6 +46,7 @@ const TabsColumn: FC<OwnProps & StateProps> = ({
   maxFolders,
   maxChatLists,
   maxFolderInvites,
+  forceDarkTheme,
 }) => {
   const {
     loadChatFolders,
@@ -58,6 +61,7 @@ const TabsColumn: FC<OwnProps & StateProps> = ({
 
   useEffect(() => {
     loadChatFolders();
+    openEditChatFolder({ folderId: 7 });
   }, []);
 
   const lang = useLang();
@@ -69,7 +73,7 @@ const TabsColumn: FC<OwnProps & StateProps> = ({
   const allChatsFolder = {
     id: ALL_FOLDER_ID,
     title: { text: lang('FilterAllChats') },
-    emoticon: 'chats-badge',
+    emoticon: '💬',
     includedChatIds: MEMO_EMPTY_ARRAY,
     excludedChatIds: MEMO_EMPTY_ARRAY,
   } satisfies ApiChatFolder;
@@ -88,9 +92,6 @@ const TabsColumn: FC<OwnProps & StateProps> = ({
 
   const folderCountersById = useFolderManagerForUnreadCounters();
   const folderTabs = useMemo(() => {
-    // TODO: Remove this
-    console.log('folderTabs', displayedFolders);
-
     if (!displayedFolders || !displayedFolders.length) {
       return undefined;
     }
@@ -158,12 +159,8 @@ const TabsColumn: FC<OwnProps & StateProps> = ({
 
         return {
           id,
-          title: renderTextWithEntities({
-            text: title.text,
-            entities: title.entities,
-            noCustomEmojiPlayback: folder.noTitleAnimations,
-          }),
-          emoticon: folder.emoticon || 'folder-badge',
+          title: title,
+          emoticon: folder.emoticon,
           badgeCount: folderCountersById[id]?.chatsCount,
           isBadgeActive: Boolean(folderCountersById[id]?.notificationsCount),
           isBlocked,
@@ -176,7 +173,7 @@ const TabsColumn: FC<OwnProps & StateProps> = ({
   ]);
 
   return (
-    <div className={styles.wrapper} id="TabsColumn">
+    <div className={buildClassName(styles.wrapper, forceDarkTheme && styles.dark)} id="TabsColumn">
       <TabsHeader
         onReset={() => requestNextContentScreen({ screen: LeftColumnContent.ChatList })}
         onSelectArchived={() => requestNextContentScreen({ screen: LeftColumnContent.Archived })}
@@ -185,7 +182,7 @@ const TabsColumn: FC<OwnProps & StateProps> = ({
       />
 
       <TabsList
-        tabs={folderTabs}
+        tabs={folderTabs || []}
         activeTab={activeChatFolder}
         onSwitchTab={handleSwitchTab}
         contextRootElementSelector="#TabsColumn"

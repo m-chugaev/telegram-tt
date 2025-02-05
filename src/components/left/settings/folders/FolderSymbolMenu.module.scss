@@ -1,0 +1,28 @@
+.menuContent {
+  // TODO: Remove this once we have a better way to position the menu
+  --offset-y: 15rem !important;
+  --offset-x: 9rem !important;
+  --color-text: var(--color-primary);
+  --border-radius-default: 1.25rem;
+
+  width: 100%;
+  max-width: calc(var(--symbol-menu-width) + var(--scrollbar-width));
+  height: var(--symbol-menu-height);
+  padding: 0 !important;
+  transform-origin: right top !important;
+
+  :global(body:not(.no-menu-blur)) & {
+    --color-background: var(--color-background-compact-menu);
+
+    backdrop-filter: blur(25px);
+  }
+
+  @media (max-width: 600px) {
+    --offset-x: 2rem !important;
+    width: auto;
+  }
+
+  :global(.sticker-set-cover), :global(.custom-emoji) {
+    color: var(--color-primary);
+  }
+}

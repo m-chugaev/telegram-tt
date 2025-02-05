@@ -1,11 +1,12 @@
+import { ApiFormattedText } from '../../../api/types/messages';
+import { FOLDER_EMOTICONS_TO_ICON } from '../../../config';
 import useContextMenuHandlers from '../../../hooks/useContextMenuHandlers';
 import { useFastClick } from '../../../hooks/useFastClick';
 import useLastCallback from '../../../hooks/useLastCallback';
 import type { FC, TeactNode } from '../../../lib/teact/teact';
-import React, { memo, useRef } from '../../../lib/teact/teact';
+import React, { memo, useMemo, useRef } from '../../../lib/teact/teact';
 import buildClassName from '../../../util/buildClassName';
 import { MouseButton } from '../../../util/windowEnvironment';
-import renderText from '../../common/helpers/renderText';
 import Icon from '../../common/icons/Icon';
 import { MenuItemContextAction } from '../../ui/ListItem';
 import Menu from '../../ui/Menu';
@@ -13,10 +14,11 @@ import MenuItem from '../../ui/MenuItem';
 import MenuSeparator from '../../ui/MenuSeparator';
 
 import styles from './Tab.module.scss';
+import { renderTextWithEntities } from '../../common/helpers/renderTextWithEntities';
 
 interface OwnProps {
-  title: TeactNode;
-  emoticon: string;
+  title: ApiFormattedText;
+  emoticon?: string;
   isActive?: boolean;
   isBlocked?: boolean;
   badgeCount?: number;
@@ -74,8 +76,49 @@ const Tab: FC<OwnProps> = ({
   );
   const getLayout = useLastCallback(() => ({ withPortal: true }));
 
-  // TODO: Add emoticon matchmap
-  // TODO: Think about long titles with emojis (need to rewrite toString() for TeactNode)
+  const getFirstEmoji = (array: TeactNode[]) => {
+    return array.find((item) => typeof item === 'object');
+  };
+
+  const getFirstText = (array: TeactNode[]) => {
+    return array.find((item) => typeof item === 'string');
+  };
+
+  const renderedTitle = useMemo(() => {
+    return renderTextWithEntities({
+      text: title.text,
+      entities: title.entities,
+      emojiSize: 32,
+    });
+  }, [title]);
+
+  const renderIcon = useMemo(() => {
+    if (emoticon) {
+      // If we got a custom emoji
+      if (title.entities && title.entities.length > 0) {
+        return getFirstEmoji(renderedTitle);
+      }
+
+      // If we got a folder emoji
+      const iconName = FOLDER_EMOTICONS_TO_ICON[emoticon] ?? '';
+
+      if (iconName) {
+        return <i className={`icon icon-${iconName}`} aria-hidden="true" role="img" />;
+      }
+    }
+
+    // If we got an emoji inside the title
+    if (renderedTitle.length > 1) {
+      return renderedTitle.find((item) => typeof item !== 'string');
+    }
+
+    // If we got a simple emoji
+    if (emoticon) {
+      return <span>{ emoticon }</span>;
+    }
+
+    return <i className="icon icon-folder-badge" aria-hidden="true" role="img" />;
+  }, [emoticon, renderedTitle, title]);
 
   return (
     <div
@@ -89,14 +132,10 @@ const Tab: FC<OwnProps> = ({
       onMouseDown={handleMouseDown}
     >
       <div className={styles.icon}>
-        {emoticon.length > 2 ? (
-          <i className={'icon icon-' + emoticon} aria-hidden="true" role="img" />
-        ) : (
-          <span>{ emoticon }</span>
-        )}
+        {renderIcon}
       </div>
       <span className={styles.title}>
-        {typeof title === 'string' ? renderText(title) : title}
+        {getFirstText(renderedTitle)}
       </span>
       {Boolean(badgeCount) && (
         <span className={buildClassName(styles.badge, isBadgeActive && styles.badgeActive)}>{badgeCount}</span>

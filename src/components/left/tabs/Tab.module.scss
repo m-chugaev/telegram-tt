@@ -20,16 +20,22 @@
 // In design folder tabs matches with chat list, so we need to keep the same height
 // Size in pixels needed for 72px height of the tab (16px padding + 16px title + 40px icon)
 .icon {
-  font-size: 1.5rem;
+  font-size: 2rem;
   line-height: 1;
-  padding: 0.5rem;
-  max-height: 40px;
+  padding: 0.2rem;
+  height: 40px;
+
+  :global(.emoji) {
+    --custom-emoji-size: 2rem;
+    width: 2rem;
+    height: 2rem;
+  }
 }
 
 .title {
-  font-size: 12px;
+  font-size: 11px;
   line-height: 16px;
-  max-height: 16px;
+  height: 16px;
   font-weight: 600;
   text-align: center;
   white-space: nowrap;

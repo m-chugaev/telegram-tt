@@ -4,11 +4,12 @@ import React, { memo } from '../../../lib/teact/teact';
 import styles from './TabsList.module.scss';
 import Tab from './Tab';
 import { MenuItemContextAction } from '../../ui/ListItem';
+import { ApiFormattedText } from '../../../api/types/messages';
 
 export interface TabItem {
   id: number;
-  title: TeactNode;
-  emoticon: string;
+  title: ApiFormattedText;
+  emoticon?: string;
   badgeCount?: number;
   isBlocked?: boolean;
   isBadgeActive?: boolean;
