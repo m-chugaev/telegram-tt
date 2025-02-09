@@ -1603,3 +1603,5 @@
 "CheckPasswordTitle" = "Enter Password";
 "CheckPasswordPlaceholder" = "Password";
 "CheckPasswordDescription" = "Please enter your password to continue.";
+"SearchEmoji" = "Search Emoji";
+"NoEmojiFound" = "No emoji found";

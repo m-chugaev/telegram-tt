@@ -1,9 +1,9 @@
 import type { FC } from '../../../lib/teact/teact';
-import React, { memo, useRef } from '../../../lib/teact/teact';
+import React, { memo, useEffect, useRef, useState } from '../../../lib/teact/teact';
 
 import type { ObserveFn } from '../../../hooks/useIntersectionObserver';
 
-import { EMOJI_SIZE_PICKER, FOLDER_SYMBOL_SET_ID, RECENT_SYMBOL_SET_ID } from '../../../config';
+import { EMOJI_SIZE_PICKER, FOLDER_SYMBOL_SET_ID, RECENT_SYMBOL_SET_ID, SEARCH_SYMBOL_SET_ID } from '../../../config';
 import buildClassName from '../../../util/buildClassName';
 import windowSize from '../../../util/windowSize';
 import { REM } from '../../common/helpers/mediaDimensions';
@@ -29,28 +29,41 @@ type OwnProps = {
   observeIntersection: ObserveFn;
   shouldRender: boolean;
   onEmojiSelect: (emoji: string, name: string) => void;
+  containerWidth?: number;
 };
 
 const EmojiCategory: FC<OwnProps> = ({
-  category, index, allEmojis, observeIntersection, shouldRender, onEmojiSelect,
+  category, index, allEmojis, observeIntersection, shouldRender, onEmojiSelect, containerWidth,
 }) => {
   // eslint-disable-next-line no-null/no-null
   const ref = useRef<HTMLDivElement>(null);
+  const [height, setHeight] = useState('auto');
 
   useOnIntersect(ref, observeIntersection);
 
   const transitionClassNames = useMediaTransitionDeprecated(shouldRender);
 
   const lang = useOldLang();
-  const { isMobile } = useAppLayout();
+  const { isMobile } = useAppLayout() || { isMobile: true };
 
-  const emojisPerRow = isMobile
-    ? Math.floor(
-      (windowSize.get().width - MOBILE_CONTAINER_PADDING + EMOJI_MARGIN) / (EMOJI_SIZE_PICKER + EMOJI_MARGIN),
-    )
-    : EMOJIS_PER_ROW_ON_DESKTOP;
-  const height = Math.ceil(category.emojis.length / emojisPerRow)
-    * (EMOJI_SIZE_PICKER + (isMobile ? EMOJI_VERTICAL_MARGIN_MOBILE : EMOJI_VERTICAL_MARGIN));
+  useEffect(() => {
+    const baseWidth = containerWidth ?? windowSize.get().width;
+  
+    const emojisPerRow = isMobile
+      ? Math.floor(
+        (baseWidth - MOBILE_CONTAINER_PADDING + EMOJI_MARGIN) / (EMOJI_SIZE_PICKER + EMOJI_MARGIN),
+      )
+      : EMOJIS_PER_ROW_ON_DESKTOP;
+
+    const height = Math.ceil(category.emojis.length / emojisPerRow)
+      * (EMOJI_SIZE_PICKER + (isMobile ? EMOJI_VERTICAL_MARGIN_MOBILE : EMOJI_VERTICAL_MARGIN));
+
+    if (category.id === SEARCH_SYMBOL_SET_ID) {
+      setHeight('auto');
+    } else {
+      setHeight(`${height}px`);
+    }
+  }, [containerWidth]);
 
   return (
     <div
@@ -68,7 +81,7 @@ const EmojiCategory: FC<OwnProps> = ({
       )}
       <div
         className={buildClassName('symbol-set-container', transitionClassNames)}
-        style={`height: ${height}px;`}
+        style={`height: ${height};`}
         dir={lang.isRtl ? 'rtl' : undefined}
       >
         {shouldRender && category.emojis.map((name) => {

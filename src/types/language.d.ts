@@ -1310,6 +1310,8 @@ export interface LangPair {
   'CheckPasswordTitle': undefined;
   'CheckPasswordPlaceholder': undefined;
   'CheckPasswordDescription': undefined;
+  'SearchEmoji': undefined;
+  'NoEmojiFound': undefined;
 }
 
 export interface LangPairWithVariables<V extends unknown = LangVariable> {

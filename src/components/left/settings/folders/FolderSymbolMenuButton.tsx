@@ -75,7 +75,7 @@ const FolderSymbolMenuButton: FC<OwnProps> = ({
         className={styles.button}
         color="translucent-graphite"
         onClick={isSymbolMenuOpen ? closeSymbolMenu : openSymbolMenu}
-        ariaLabel="Choose emoji, sticker or GIF"
+        ariaLabel="Choose emoji"
       >
         {renderEmoji}
       </Button>

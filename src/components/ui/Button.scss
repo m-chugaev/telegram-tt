@@ -238,16 +238,16 @@
   }
 
   &.translucent-graphite {
-    --ripple-color: rgba(0, 0, 0, 0.08);
+    --ripple-color: var(--color-background-selected);
     background-color: transparent;
     color: var(--color-graphite);
 
     @include active-styles() {
-      background-color: rgba(0, 0, 0, 0.08);
+      background-color: var(--color-background-selected);
     }
 
     @include no-ripple-styles() {
-      background-color: rgba(0, 0, 0, 0.08);
+      background-color: var(--color-background-selected);
     }
   }
 

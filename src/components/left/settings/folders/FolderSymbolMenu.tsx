@@ -1,7 +1,6 @@
-import type { RefObject } from 'react';
 import type { FC } from '../../../../lib/teact/teact';
 import React, {
-  memo, useCallback, useEffect, useRef,
+  memo, useCallback, useEffect,
   useState,
 } from '../../../../lib/teact/teact';
 import { getActions, withGlobal } from '../../../../global';
@@ -73,6 +72,7 @@ const FolderSymbolMenu: FC<OwnProps & StateProps> = ({
             onEmojiSelect={handleEmojiSelect}
             hideRecentEmojis
             showFolderEmojis
+            withSearch
           />
         );
       case SymbolMenuTabs.CustomEmoji:
@@ -96,8 +96,6 @@ const FolderSymbolMenu: FC<OwnProps & StateProps> = ({
   function stopPropagation(event: any) {
     event.stopPropagation();
   }
-
-  // TODO: Add search like in design
 
   return (
     <Portal>
