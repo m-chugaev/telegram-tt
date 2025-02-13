@@ -61,7 +61,6 @@ const TabsColumn: FC<OwnProps & StateProps> = ({
 
   useEffect(() => {
     loadChatFolders();
-    openEditChatFolder({ folderId: 7 });
   }, []);
 
   const lang = useLang();
