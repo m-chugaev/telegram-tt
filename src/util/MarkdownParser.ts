@@ -27,24 +27,24 @@ class MarkdownParser {
   parse(): string {
     while (this.pos < this.text.length) {
       const char = this.peek();
-    
+
       if (char === '\n') {
         this.parseNewline();
       } else if (this.text.startsWith('```', this.pos)) {
         this.parseCodeBlock();
-      } else if (char === '`' && !this.isInsideCodeBlock()) {
+      } else if (char === '`') {
         this.parseInlineCode();
-      } else if (this.text.startsWith('**', this.pos) && !this.isInsideCodeBlock()) {
-        this.parseBold();
-      } else if (this.text.startsWith('__', this.pos) && !this.isInsideCodeBlock()) {
-        this.parseItalic();
-      } else if (this.text.startsWith('~~', this.pos) && !this.isInsideCodeBlock()) {
-        this.parseStrike();
-      } else if (this.text.startsWith('||', this.pos) && !this.isInsideCodeBlock()) {
+      } else if (this.text.startsWith('||', this.pos)) {
         this.parseSpoiler();
+      } else if (this.text.startsWith('**', this.pos)) {
+        this.parseBold();
+      } else if (this.text.startsWith('__', this.pos)) {
+        this.parseItalic();
+      } else if (this.text.startsWith('~~', this.pos)) {
+        this.parseStrike();
       } else if (char === '[' && this.text.includes('](customEmoji:', this.pos)) {
         this.parseCustomEmoji();
-      } else if (char === '[' && this.isValidLinkStart() && !this.isInsideCodeBlock()) {
+      } else if (char === '[' && this.isValidLinkStart()) {
         this.parseLink();
       } else {
         this.parseText();
@@ -145,9 +145,14 @@ class MarkdownParser {
       if (specialChars.includes(char) && char === nextChar) {
         break;
       }
-      
-      // Check for code block start
-      if (char === '`' && this.text.startsWith('```', this.pos)) {
+
+      // Check for inline code block start
+      if (char === '`') {
+        break;
+      }
+
+      // Check for link start
+      if (char === '[' && this.isValidLinkStart()) {
         break;
       }
       
@@ -168,17 +173,6 @@ class MarkdownParser {
       type: 'newline',
       content: '\n',
     });
-  }
-  
-  // Helper method to check if we're inside a code or pre block
-  private isInsideCodeBlock(): boolean {
-    for (let i = this.tokens.length - 1; i >= 0; i--) {
-      const token = this.tokens[i];
-      if (token.type === 'pre' || token.type === 'code') {
-        return true;
-      }
-    }
-    return false;
   }
 
   private parseCodeBlock(): void {
@@ -271,9 +265,9 @@ class MarkdownParser {
           return `<s>${token.content}</s>`;
         case 'spoiler':
           return `<span data-entity-type="${ApiMessageEntityTypes.Spoiler}">${token.content}</span>`;
+        case 'link':
+          return `<a href="${token.url}">${token.content}</a>`;
         case 'emoji':
-          // Contest problem: "We can’t directly render components, so custom emojis rely on workarounds."
-          // Potentially it can be a teact component if parse returns a teact node
           return `<img alt="${token.content}" data-document-id="${token.documentId}">`;
         case 'text':
           return token.content;

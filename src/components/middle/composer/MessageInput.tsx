@@ -279,6 +279,49 @@ const MessageInput: FC<OwnProps & StateProps> = ({
     clearSelection();
   });
 
+  function checkStuckInsideSpecialTags(e: React.KeyboardEvent<HTMLDivElement>) {
+    const selection = window.getSelection();
+    if (!selection) return;
+  
+    const baseNode = selection.baseNode;
+    if (!baseNode?.parentNode) return;
+
+    const isInSpecialTag = ['BLOCKQUOTE', 'CODE', 'SPAN'].includes(baseNode.parentNode.tagName);
+
+    if (isInSpecialTag && (e.key === 'ArrowRight' || (e.key === 'Enter' && e.shiftKey))) {
+      const range = selection.getRangeAt(0);
+      const isAtEnd = range.endOffset === baseNode.textContent?.length;
+      
+      const parentNode = baseNode.parentNode;
+      const isLastNode = !parentNode.nextSibling || 
+        (parentNode.nextSibling.nodeType === Node.TEXT_NODE && !parentNode.nextSibling.textContent);
+
+      if (isAtEnd && isLastNode) {
+        e.preventDefault();
+
+        const spaceNode = document.createTextNode(e.key === 'Enter' ? '\n' : ' ');
+        if (parentNode.nextSibling) {
+          inputRef.current?.insertBefore(spaceNode, parentNode.nextSibling);
+        } else {
+          inputRef.current?.appendChild(spaceNode);
+        }
+
+        // Trigger change event to update input height
+        const syntheticEvent = {
+          target: inputRef.current,
+          currentTarget: inputRef.current,
+        } as React.ChangeEvent<HTMLDivElement>;
+        handleChange(syntheticEvent);
+
+        const newRange = document.createRange();
+        newRange.setStartAfter(spaceNode);
+        newRange.collapse(true);
+        selection.removeAllRanges();
+        selection.addRange(newRange);
+      }
+    }
+  }
+
   function checkSelection() {
     // Disable the formatter on iOS devices for now.
     if (IS_IOS) {
@@ -413,6 +456,8 @@ const MessageInput: FC<OwnProps & StateProps> = ({
     } else {
       e.target.addEventListener('keyup', processSelectionWithTimeout, { once: true });
     }
+
+    checkStuckInsideSpecialTags(e);
   }
 
   function handleChange(e: ChangeEvent<HTMLDivElement>) {

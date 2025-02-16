@@ -40,6 +40,7 @@ interface ISelectedTextFormats {
   strikethrough?: boolean;
   monospace?: boolean;
   spoiler?: boolean;
+  blockquote?: boolean;
 }
 
 const TEXT_FORMAT_BY_TAG_NAME: Record<string, keyof ISelectedTextFormats> = {
@@ -51,6 +52,7 @@ const TEXT_FORMAT_BY_TAG_NAME: Record<string, keyof ISelectedTextFormats> = {
   DEL: 'strikethrough',
   CODE: 'monospace',
   SPAN: 'spoiler',
+  BLOCKQUOTE: 'blockquote',
 };
 const fragmentEl = document.createElement('div');
 
@@ -139,12 +141,20 @@ const TextFormatter: FC<OwnProps> = ({
     if (!selectedRange) {
       return undefined;
     }
+
     fragmentEl.replaceChildren(selectedRange.cloneContents());
     if (shouldDropCustomEmoji) {
       fragmentEl.querySelectorAll(INPUT_CUSTOM_EMOJI_SELECTOR).forEach((el) => {
         el.replaceWith(el.getAttribute('alt')!);
       });
     }
+
+    ['CODE', 'BLOCKQUOTE'].forEach((tag) => {
+      fragmentEl.querySelectorAll(tag).forEach((el) => {
+        el.replaceWith(el.textContent || '');
+      });
+    });
+
     return fragmentEl.innerHTML;
   });
 
@@ -189,7 +199,7 @@ const TextFormatter: FC<OwnProps> = ({
       return 'active';
     }
 
-    if (key === 'monospace' || key === 'strikethrough') {
+    if (key === 'monospace' || key === 'strikethrough' || key === 'blockquote') {
       if (Object.keys(selectedTextFormats).some(
         (fKey) => fKey !== key && Boolean(selectedTextFormats[fKey as keyof ISelectedTextFormats]),
       )) {
@@ -290,6 +300,7 @@ const TextFormatter: FC<OwnProps> = ({
     const text = getSelectedText();
     document.execCommand('insertHTML', false, `<del>${text}</del>`);
     onClose();
+    restoreSelection();
   });
 
   const handleMonospaceText = useLastCallback(() => {
@@ -316,6 +327,35 @@ const TextFormatter: FC<OwnProps> = ({
     const text = getSelectedText(true);
     document.execCommand('insertHTML', false, `<code class="text-entity-code" dir="auto">${text}</code>`);
     onClose();
+    restoreSelection();
+  });
+
+  const handleBlockquoteText = useLastCallback(() => {
+    if (selectedTextFormats.blockquote) {
+      const element = getSelectedElement();
+      // TODO: think about b and i inside blockquote
+      if (
+        !selectedRange
+        || !element
+        || element.tagName !== 'BLOCKQUOTE'
+        || !element.textContent
+      ) {
+        return;
+      }
+
+      element.replaceWith(element.textContent);
+      setSelectedTextFormats((selectedFormats) => ({
+        ...selectedFormats,
+        blockquote: false,
+      }));
+
+      return;
+    }
+
+    const text = getSelectedText();
+    document.execCommand('insertHTML', false, `<blockquote class="blockquote" dir="auto">${text}</blockquote>`);
+    onClose();
+    restoreSelection();
   });
 
   const handleLinkUrlConfirm = useLastCallback(() => {
@@ -330,21 +370,26 @@ const TextFormatter: FC<OwnProps> = ({
       (element as HTMLAnchorElement).href = formattedLinkUrl;
 
       onClose();
+      restoreSelection();
 
       return;
     }
 
     const text = getSelectedText(true);
-    restoreSelection();
     document.execCommand(
       'insertHTML',
       false,
       `<a href=${formattedLinkUrl} class="text-entity-link" dir="auto">${text}</a>`,
     );
     onClose();
+    restoreSelection();
   });
 
   const handleKeyDown = useLastCallback((e: KeyboardEvent) => {
+    if (e.altKey) {
+      return;
+    }
+
     const HANDLERS_BY_KEY: Record<string, AnyToVoidFunction> = {
       k: openLinkControl,
       b: handleBoldText,
@@ -353,21 +398,26 @@ const TextFormatter: FC<OwnProps> = ({
       m: handleMonospaceText,
       s: handleStrikethroughText,
       p: handleSpoilerText,
+      q: handleBlockquoteText,
     };
-
     const handler = HANDLERS_BY_KEY[getKeyFromEvent(e)];
-
-    if (
-      e.altKey
-      || !(e.ctrlKey || e.metaKey)
-      || !handler
-    ) {
-      return;
+    if ((e.ctrlKey || e.metaKey) && handler) {
+      e.preventDefault();
+      e.stopPropagation();
+      handler();
     }
 
-    e.preventDefault();
-    e.stopPropagation();
-    handler();
+    const SHIFT_HANDLERS_BY_KEY: Record<string, AnyToVoidFunction> = {
+      '.': handleBlockquoteText,
+      ',': handleBlockquoteText,
+      '>': handleBlockquoteText,
+    };
+    const shiftHandler = SHIFT_HANDLERS_BY_KEY[getKeyFromEvent(e)];
+    if ((e.ctrlKey || e.metaKey) && e.shiftKey && shiftHandler) {
+      e.preventDefault();
+      e.stopPropagation();
+      shiftHandler();
+    }
   });
 
   useEffect(() => {
@@ -464,6 +514,14 @@ const TextFormatter: FC<OwnProps> = ({
           onClick={handleMonospaceText}
         >
           <Icon name="monospace" />
+        </Button>
+        <Button
+          color="translucent"
+          ariaLabel="Quote text"
+          className={getFormatButtonClassName('blockquote')}
+          onClick={handleBlockquoteText}
+        >
+          <Icon name="quote-text" />
         </Button>
         <div className="TextFormatter-divider" />
         <Button color="translucent" ariaLabel={lang('TextFormat.AddLinkTitle')} onClick={openLinkControl}>
