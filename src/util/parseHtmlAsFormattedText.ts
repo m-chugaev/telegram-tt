@@ -1,5 +1,6 @@
 import type { ApiFormattedText, ApiMessageEntity } from '../api/types';
 import { ApiMessageEntityTypes } from '../api/types';
+
 import MarkdownParser from './MarkdownParser';
 
 export const ENTITY_CLASS_BY_NODE_NAME: Record<string, ApiMessageEntityTypes> = {
@@ -20,7 +21,7 @@ export const ENTITY_CLASS_BY_NODE_NAME: Record<string, ApiMessageEntityTypes> = 
 const MAX_TAG_DEEPNESS = 3;
 
 export default function parseHtmlAsFormattedText(
-  html: string, withMarkdownLinks = false, skipMarkdown = false,
+  html: string, skipMarkdown = false,
 ): ApiFormattedText {
   const fragment = document.createElement('div');
   fragment.innerHTML = skipMarkdown ? html : (new MarkdownParser(html)).parse();

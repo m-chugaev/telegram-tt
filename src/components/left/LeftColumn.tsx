@@ -456,7 +456,14 @@ function LeftColumn({
     if (nextFoldersAction) {
       foldersDispatch(nextFoldersAction);
     }
-  }, [foldersDispatch, nextFoldersAction, nextSettingsScreen, requestNextSettingsScreen, nextContentScreen, requestNextContentScreen]);
+  }, [
+    foldersDispatch,
+    nextFoldersAction,
+    nextSettingsScreen,
+    requestNextSettingsScreen,
+    nextContentScreen,
+    requestNextContentScreen,
+  ]);
 
   const handleSettingsScreenSelect = useLastCallback((screen: SettingsScreens) => {
     setContent(LeftColumnContent.Settings);

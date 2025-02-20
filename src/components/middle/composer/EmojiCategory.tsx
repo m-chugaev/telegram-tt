@@ -1,9 +1,13 @@
 import type { FC } from '../../../lib/teact/teact';
-import React, { memo, useEffect, useRef, useState } from '../../../lib/teact/teact';
+import React, {
+  memo, useEffect, useRef, useState,
+} from '../../../lib/teact/teact';
 
 import type { ObserveFn } from '../../../hooks/useIntersectionObserver';
 
-import { EMOJI_SIZE_PICKER, FOLDER_SYMBOL_SET_ID, RECENT_SYMBOL_SET_ID, SEARCH_SYMBOL_SET_ID } from '../../../config';
+import {
+  EMOJI_SIZE_PICKER, FOLDER_SYMBOL_SET_ID, RECENT_SYMBOL_SET_ID, SEARCH_SYMBOL_SET_ID,
+} from '../../../config';
 import buildClassName from '../../../util/buildClassName';
 import windowSize from '../../../util/windowSize';
 import { REM } from '../../common/helpers/mediaDimensions';
@@ -48,22 +52,22 @@ const EmojiCategory: FC<OwnProps> = ({
 
   useEffect(() => {
     const baseWidth = containerWidth ?? windowSize.get().width;
-  
+
     const emojisPerRow = isMobile
       ? Math.floor(
         (baseWidth - MOBILE_CONTAINER_PADDING + EMOJI_MARGIN) / (EMOJI_SIZE_PICKER + EMOJI_MARGIN),
       )
       : EMOJIS_PER_ROW_ON_DESKTOP;
 
-    const height = Math.ceil(category.emojis.length / emojisPerRow)
+    const newHeight = Math.ceil(category.emojis.length / emojisPerRow)
       * (EMOJI_SIZE_PICKER + (isMobile ? EMOJI_VERTICAL_MARGIN_MOBILE : EMOJI_VERTICAL_MARGIN));
 
     if (category.id === SEARCH_SYMBOL_SET_ID) {
       setHeight('auto');
     } else {
-      setHeight(`${height}px`);
+      setHeight(`${newHeight}px`);
     }
-  }, [containerWidth]);
+  }, [containerWidth, category.emojis.length, category.id, isMobile]);
 
   return (
     <div

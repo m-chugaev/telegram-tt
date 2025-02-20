@@ -2,10 +2,13 @@ import type { FC, TeactNode } from '../../../../lib/teact/teact';
 import React, { memo, useMemo } from '../../../../lib/teact/teact';
 
 import type { ApiFormattedText, ApiSticker } from '../../../../api/types';
+
 import { FOLDER_EMOTICONS_TO_ICON } from '../../../../config';
-import Button from '../../../ui/Button';
 import { renderTextWithEntities } from '../../../common/helpers/renderTextWithEntities';
+
+import Button from '../../../ui/Button';
 import FolderSymbolMenu from './FolderSymbolMenu';
+
 import styles from './FolderSymbolMenuButton.module.scss';
 
 type OwnProps = {

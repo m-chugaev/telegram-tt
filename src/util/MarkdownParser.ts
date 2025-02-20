@@ -1,4 +1,4 @@
-import { ApiMessageEntityTypes } from "../api/types";
+import { ApiMessageEntityTypes } from '../api/types';
 
 interface MarkdownToken {
   type: 'text' | 'code' | 'pre' | 'bold' | 'italic' | 'strike' | 'spoiler' | 'emoji' | 'newline' | 'link';
@@ -10,7 +10,9 @@ interface MarkdownToken {
 
 class MarkdownParser {
   private pos = 0;
+
   private tokens: MarkdownToken[] = [];
+
   private readonly text: string;
 
   constructor(input: string) {
@@ -76,46 +78,46 @@ class MarkdownParser {
     this.consume(2); // Skip **
     const content = this.readUntil('**');
     this.consume(2); // Skip closing **
-    
+
     this.tokens.push({
       type: 'bold',
       content,
     });
   }
-  
+
   private parseItalic(): void {
     this.consume(2); // Skip __
     const content = this.readUntil('__');
     this.consume(2); // Skip closing __
-    
+
     this.tokens.push({
       type: 'italic',
       content,
     });
   }
-  
+
   private parseStrike(): void {
     this.consume(2); // Skip ~~
     const content = this.readUntil('~~');
     this.consume(2); // Skip closing ~~
-    
+
     this.tokens.push({
       type: 'strike',
       content,
     });
   }
-  
+
   private parseSpoiler(): void {
     this.consume(2); // Skip ||
     const content = this.readUntil('||');
     this.consume(2); // Skip closing ||
-    
+
     this.tokens.push({
       type: 'spoiler',
       content,
     });
   }
-  
+
   private parseCustomEmoji(): void {
     // Skip [
     this.consume();
@@ -125,22 +127,22 @@ class MarkdownParser {
     const documentId = this.readUntil(')');
     // Skip )
     this.consume();
-    
+
     this.tokens.push({
       type: 'emoji',
       content: alt,
       documentId,
     });
   }
-  
+
   private parseText(): void {
     let content = '';
     const specialChars = ['`', '*', '_', '~', '|', '['];
-    
+
     while (this.pos < this.text.length) {
       const char = this.peek();
       const nextChar = this.peek(1);
-      
+
       // Check for special formatting start
       if (specialChars.includes(char) && char === nextChar) {
         break;
@@ -155,10 +157,10 @@ class MarkdownParser {
       if (char === '[' && this.isValidLinkStart()) {
         break;
       }
-      
+
       content += this.consume();
     }
-    
+
     if (content) {
       this.tokens.push({
         type: 'text',
@@ -166,7 +168,7 @@ class MarkdownParser {
       });
     }
   }
-  
+
   private parseNewline(): void {
     this.consume();
     this.tokens.push({
@@ -181,7 +183,7 @@ class MarkdownParser {
     this.consume(); // Skip \n
     const content = this.readUntil('```');
     this.consume(3); // Skip closing ```
-    
+
     this.tokens.push({
       type: 'pre',
       content: content.trim(),
@@ -193,7 +195,7 @@ class MarkdownParser {
     this.consume(); // Skip `
     const content = this.readUntil('`');
     this.consume(); // Skip closing `
-    
+
     this.tokens.push({
       type: 'code',
       content,
@@ -210,8 +212,15 @@ class MarkdownParser {
     // Skip )
     this.consume();
 
-    const url = this.formatUrl(link);
-    
+    const formatUrl = (rawUrl: string): string => {
+      if (rawUrl.includes('://')) return rawUrl;
+      if (rawUrl.includes('@')) return `mailto:${rawUrl}`;
+
+      return `https://${rawUrl}`;
+    };
+
+    const url = formatUrl(link);
+
     this.tokens.push({
       type: 'link',
       content: text,
@@ -219,32 +228,25 @@ class MarkdownParser {
     });
   }
 
-  private formatUrl(link: string): string {
-    if (link.includes('://')) return link;
-    if (link.includes('@')) return `mailto:${link}`;
-
-    return `https://${link}`;
-  }
-
   private isValidLinkStart(): boolean {
     // Look ahead to check if this is a valid link pattern
     let i = this.pos;
-    
+
     // Skip [
     if (this.text[i] !== '[') return false;
     i++;
-    
+
     // Find closing ]
     while (i < this.text.length && this.text[i] !== ']') {
       if (this.text[i] === '\n') return false; // Links can't contain newlines
       i++;
     }
     if (i >= this.text.length) return false;
-    
+
     // Check for (
     i++;
     if (i >= this.text.length || this.text[i] !== '(') return false;
-    
+
     return true;
   }
 

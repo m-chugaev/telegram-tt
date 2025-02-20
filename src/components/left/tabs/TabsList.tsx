@@ -1,10 +1,12 @@
-import type { FC, TeactNode } from '../../../lib/teact/teact';
+import type { FC } from '../../../lib/teact/teact';
 import React, { memo } from '../../../lib/teact/teact';
 
-import styles from './TabsList.module.scss';
+import type { ApiFormattedText } from '../../../api/types/messages';
+import type { MenuItemContextAction } from '../../ui/ListItem';
+
 import Tab from './Tab';
-import { MenuItemContextAction } from '../../ui/ListItem';
-import { ApiFormattedText } from '../../../api/types/messages';
+
+import styles from './TabsList.module.scss';
 
 export interface TabItem {
   id: number;
@@ -23,7 +25,9 @@ interface OwnProps {
   contextRootElementSelector?: string;
 }
 
-const TabsList: FC<OwnProps> = ({ tabs, activeTab, onSwitchTab, contextRootElementSelector }) => {
+const TabsList: FC<OwnProps> = ({
+  tabs, activeTab, onSwitchTab, contextRootElementSelector,
+}) => {
   return (
     <div className={styles.wrapper} role="tablist">
       {tabs.map((tab, i) => (
@@ -43,6 +47,6 @@ const TabsList: FC<OwnProps> = ({ tabs, activeTab, onSwitchTab, contextRootEleme
       ))}
     </div>
   );
-}
+};
 
-export default memo(TabsList); 
+export default memo(TabsList);

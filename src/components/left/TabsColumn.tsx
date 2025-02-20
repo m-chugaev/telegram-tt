@@ -1,27 +1,30 @@
-import { ApiChatFolder, ApiChatlistExportedInvite } from '../../api/types';
-import { ALL_FOLDER_ID } from '../../config';
-import { selectCanShareFolder } from '../../global/selectors';
+import type { FC } from '../../lib/teact/teact';
+import React, { memo, useEffect, useMemo } from '../../lib/teact/teact';
 import { getActions, getGlobal, withGlobal } from '../../global';
-import { selectTabState } from '../../global/selectors';
+
+import type { ApiChatFolder, ApiChatlistExportedInvite } from '../../api/types';
+import type { MenuItemContextAction } from '../ui/ListItem';
+import type { TabItem } from './tabs/TabsList';
+import { LeftColumnContent, SettingsScreens } from '../../types';
+
+import { ALL_FOLDER_ID } from '../../config';
+import { selectCanShareFolder, selectTabState } from '../../global/selectors';
 import { selectCurrentLimit } from '../../global/selectors/limits';
-import { renderTextWithEntities } from '../common/helpers/renderTextWithEntities';
+import buildClassName from '../../util/buildClassName';
+import { MEMO_EMPTY_ARRAY } from '../../util/memo';
+
 import { useFolderManagerForUnreadCounters } from '../../hooks/useFolderManager';
 import useLang from '../../hooks/useLang';
 import useLastCallback from '../../hooks/useLastCallback';
-import type { FC } from '../../lib/teact/teact';
-import React, { memo, useEffect, useMemo } from '../../lib/teact/teact';
-import { MEMO_EMPTY_ARRAY } from '../../util/memo';
-import { MenuItemContextAction } from '../ui/ListItem';
+
+import TabsHeader from './tabs/TabsHeader';
+import TabsList from './tabs/TabsList';
 
 import styles from './TabsColumn.module.scss';
-import TabsHeader from './tabs/TabsHeader';
-import TabsList, { TabItem } from './tabs/TabsList';
-import { LeftColumnContent, SettingsScreens } from '../../types';
-import buildClassName from '../../util/buildClassName';
 
 type OwnProps = {
   forceDarkTheme?: boolean;
-}
+};
 
 type StateProps = {
   chatFoldersById: Record<number, ApiChatFolder>;
@@ -69,7 +72,7 @@ const TabsColumn: FC<OwnProps & StateProps> = ({
     setActiveChatFolder({ activeChatFolder: index }, { forceOnHeavyAnimation: true });
   });
 
-  const allChatsFolder = {
+  const allChatsFolder: ApiChatFolder = {
     id: ALL_FOLDER_ID,
     title: { text: lang('FilterAllChats') },
     emoticon: '💬',
@@ -96,88 +99,99 @@ const TabsColumn: FC<OwnProps & StateProps> = ({
     }
 
     return displayedFolders.map((folder, i) => {
-        const { id, title } = folder;
-        const isBlocked = id !== ALL_FOLDER_ID && i > maxFolders - 1;
-        const canShareFolder = selectCanShareFolder(getGlobal(), id);
-        const contextActions: MenuItemContextAction[] = [];
+      const { id, title } = folder;
+      const isBlocked = id !== ALL_FOLDER_ID && i > maxFolders - 1;
+      const canShareFolder = selectCanShareFolder(getGlobal(), id);
+      const contextActions: MenuItemContextAction[] = [];
 
-        if (canShareFolder) {
-          contextActions.push({
-            title: lang('FilterShare'),
-            icon: 'link',
-            handler: () => {
-              const chatListCount = Object.values(chatFoldersById).reduce((acc, el) => acc + (el.isChatList ? 1 : 0), 0);
-              if (chatListCount >= maxChatLists && !folder.isChatList) {
-                openLimitReachedModal({
-                  limit: 'chatlistJoined',
-                });
-                return;
-              }
-
-              // Greater amount can be after premium downgrade
-              if (folderInvitesById[id]?.length >= maxFolderInvites) {
-                openLimitReachedModal({
-                  limit: 'chatlistInvites',
-                });
-                return;
-              }
-
-              openShareChatFolderModal({
-                folderId: id,
+      if (canShareFolder) {
+        contextActions.push({
+          title: lang('FilterShare'),
+          icon: 'link',
+          handler: () => {
+            const chatListCount = Object.values(chatFoldersById).reduce((acc, el) => acc + (el.isChatList ? 1 : 0), 0);
+            if (chatListCount >= maxChatLists && !folder.isChatList) {
+              openLimitReachedModal({
+                limit: 'chatlistJoined',
               });
-            },
-          });
-        }
+              return;
+            }
 
-        if (id === ALL_FOLDER_ID) {
-          contextActions.push({
-            title: lang('FilterEditAll'),
-            icon: 'edit',
-            handler: () => {
-              requestNextSettingsScreen({ screen: SettingsScreens.Folders });
-            },
-          });
-        } else {
-          contextActions.push({
-            title: lang('FilterEdit'),
-            icon: 'edit',
-            handler: () => {
-              openEditChatFolder({ folderId: id });
-            },
-          });
+            // Greater amount can be after premium downgrade
+            if (folderInvitesById[id]?.length >= maxFolderInvites) {
+              openLimitReachedModal({
+                limit: 'chatlistInvites',
+              });
+              return;
+            }
 
-          contextActions.push({
-            title: lang('FilterDelete'),
-            icon: 'delete',
-            destructive: true,
-            handler: () => {
-              openDeleteChatFolderModal({ folderId: id });
-            },
-          });
-        }
+            openShareChatFolderModal({
+              folderId: id,
+            });
+          },
+        });
+      }
 
-        return {
-          id,
-          title: title,
-          emoticon: folder.emoticon,
-          badgeCount: folderCountersById[id]?.chatsCount,
-          isBadgeActive: Boolean(folderCountersById[id]?.notificationsCount),
-          isBlocked,
-          contextActions: contextActions?.length ? contextActions : undefined,
-        } satisfies TabItem;
-      });
-    }, [
+      if (id === ALL_FOLDER_ID) {
+        contextActions.push({
+          title: lang('FilterEditAll'),
+          icon: 'edit',
+          handler: () => {
+            requestNextSettingsScreen({ screen: SettingsScreens.Folders });
+          },
+        });
+      } else {
+        contextActions.push({
+          title: lang('FilterEdit'),
+          icon: 'edit',
+          handler: () => {
+            openEditChatFolder({ folderId: id });
+          },
+        });
+
+        contextActions.push({
+          title: lang('FilterDelete'),
+          icon: 'delete',
+          destructive: true,
+          handler: () => {
+            openDeleteChatFolderModal({ folderId: id });
+          },
+        });
+      }
+
+      return {
+        id,
+        title,
+        emoticon: folder.emoticon,
+        badgeCount: folderCountersById[id]?.chatsCount,
+        isBadgeActive: Boolean(folderCountersById[id]?.notificationsCount),
+        isBlocked,
+        contextActions: contextActions?.length ? contextActions : undefined,
+      } satisfies TabItem;
+    });
+  }, [
     displayedFolders, maxFolders, folderCountersById, lang, chatFoldersById, maxChatLists, folderInvitesById,
     maxFolderInvites,
   ]);
 
+  const handleSelectArchived = useLastCallback(() => {
+    requestNextContentScreen({ screen: LeftColumnContent.Archived });
+  });
+
+  const handleSelectContacts = useLastCallback(() => {
+    requestNextContentScreen({ screen: LeftColumnContent.Contacts });
+  });
+
+  const handleSelectSettings = useLastCallback(() => {
+    requestNextContentScreen({ screen: LeftColumnContent.Settings });
+  });
+
   return (
     <div className={buildClassName(styles.wrapper, forceDarkTheme && styles.dark)} id="TabsColumn">
       <TabsHeader
-        onReset={() => requestNextContentScreen({ screen: LeftColumnContent.ChatList })}
-        onSelectArchived={() => requestNextContentScreen({ screen: LeftColumnContent.Archived })}
-        onSelectContacts={() => requestNextContentScreen({ screen: LeftColumnContent.Contacts })}
-        onSelectSettings={() => requestNextContentScreen({ screen: LeftColumnContent.Settings })}
+        onSelectArchived={handleSelectArchived}
+        onSelectContacts={handleSelectContacts}
+        onSelectSettings={handleSelectSettings}
       />
 
       <TabsList

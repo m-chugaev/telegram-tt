@@ -13,11 +13,14 @@ import type {
   EmojiRawData,
 } from '../../../util/emoji/emoji';
 
-import { FOLDER_EMOTICONS_TO_EMOJI, FOLDER_SYMBOL_SET_ID, MENU_TRANSITION_DURATION, RECENT_SYMBOL_SET_ID, SEARCH_SYMBOL_SET_ID } from '../../../config';
+import {
+  FOLDER_EMOTICONS_TO_EMOJI, FOLDER_SYMBOL_SET_ID, MENU_TRANSITION_DURATION, RECENT_SYMBOL_SET_ID, SEARCH_SYMBOL_SET_ID,
+} from '../../../config';
 import animateHorizontalScroll from '../../../util/animateHorizontalScroll';
 import animateScroll from '../../../util/animateScroll';
 import buildClassName from '../../../util/buildClassName';
 import { uncompressEmoji } from '../../../util/emoji/emoji';
+import filterObjectKeys from '../../../util/filterObjectKeys';
 import { pick } from '../../../util/iteratees';
 import { MEMO_EMPTY_ARRAY } from '../../../util/memo';
 import { IS_TOUCH_ENV } from '../../../util/windowEnvironment';
@@ -26,6 +29,7 @@ import { REM } from '../../common/helpers/mediaDimensions';
 import useAppLayout from '../../../hooks/useAppLayout';
 import useHorizontalScroll from '../../../hooks/useHorizontalScroll';
 import { useIntersectionObserver } from '../../../hooks/useIntersectionObserver';
+import useLang from '../../../hooks/useLang';
 import useLastCallback from '../../../hooks/useLastCallback';
 import useScrolledState from '../../../hooks/useScrolledState';
 import useAsyncRendering from '../../right/hooks/useAsyncRendering';
@@ -33,12 +37,10 @@ import useAsyncRendering from '../../right/hooks/useAsyncRendering';
 import Icon from '../../common/icons/Icon';
 import Button from '../../ui/Button';
 import Loading from '../../ui/Loading';
+import SearchInput from '../../ui/SearchInput';
 import EmojiCategory from './EmojiCategory';
 
 import './EmojiPicker.scss';
-import SearchInput from '../../ui/SearchInput';
-import filterObjectKeys from '../../../util/filterObjectKeys';
-import useLang from '../../../hooks/useLang';
 
 type OwnProps = {
   className?: string;
@@ -154,7 +156,7 @@ const EmojiPicker: FC<OwnProps & StateProps> = ({
     }
 
     setContainerWidth(containerRef.current.clientWidth);
-  }, [containerRef.current]);
+  }, [containerRef]);
 
   const lang = useLang();
 
@@ -230,19 +232,19 @@ const EmojiPicker: FC<OwnProps & StateProps> = ({
     onEmojiSelect(emoji, name);
   });
 
-  const handleSearch = (value: string) => {
+  const handleSearch = useLastCallback((value: string) => {
     if (!value) {
       setIsSearchActive(false);
       setFilteredEmojis({});
       return;
     }
 
-    const filteredEmojis = filterObjectKeys(emojiData.emojis, value);
+    const newFilteredEmojis = filterObjectKeys(emojiData.emojis, value);
 
     setIsSearchActive(true);
-    setFilteredEmojis(filteredEmojis as AllEmojis);
+    setFilteredEmojis(newFilteredEmojis as AllEmojis);
     setResetSearchInput(false);
-  };
+  });
 
   function renderCategoryButton(category: EmojiCategoryData, index: number) {
     const icon = ICONS_BY_CATEGORY[category.id];
@@ -303,27 +305,27 @@ const EmojiPicker: FC<OwnProps & StateProps> = ({
           </div>
         )}
         {isSearchActive ? (
-            <div>
-              {Object.keys(filteredEmojis).length > 0 ? (
-                <EmojiCategory
-                  category={{
-                    id: SEARCH_SYMBOL_SET_ID,
-                    name: '',
-                    emojis: Object.keys(filteredEmojis),
-                  }}
-                  index={0}
-                  allEmojis={filteredEmojis}
-                  observeIntersection={observeIntersection}
-                  shouldRender={true}
-                  onEmojiSelect={handleEmojiSelect}
-                  containerWidth={containerWidth}
-                />
-              ) : (
-                <div className="EmojiPicker-search-results">
-                  <i className="icon icon-search" aria-hidden="true" />
-                  {lang('NoEmojiFound')}
-                </div>
-              )}
+          <div>
+            {Object.keys(filteredEmojis).length > 0 ? (
+              <EmojiCategory
+                category={{
+                  id: SEARCH_SYMBOL_SET_ID,
+                  name: '',
+                  emojis: Object.keys(filteredEmojis),
+                }}
+                index={0}
+                allEmojis={filteredEmojis}
+                observeIntersection={observeIntersection}
+                shouldRender
+                onEmojiSelect={handleEmojiSelect}
+                containerWidth={containerWidth}
+              />
+            ) : (
+              <div className="EmojiPicker-search-results">
+                <i className="icon icon-search" aria-hidden="true" />
+                {lang('NoEmojiFound')}
+              </div>
+            )}
           </div>
         ) : (
           allCategories.map((category, i) => (

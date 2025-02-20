@@ -11,14 +11,14 @@ import { selectIsContextMenuTranslucent } from '../../../../global/selectors';
 
 import useFlag from '../../../../hooks/useFlag';
 
+import CustomEmojiPicker from '../../../common/CustomEmojiPicker';
+import EmojiPicker from '../../../middle/composer/EmojiPicker';
+import SymbolMenuFooter, { SymbolMenuTabs } from '../../../middle/composer/SymbolMenuFooter';
 import Menu from '../../../ui/Menu';
 import Portal from '../../../ui/Portal';
+import Transition from '../../../ui/Transition';
 
 import styles from './FolderSymbolMenu.module.scss';
-import EmojiPicker from '../../../middle/composer/EmojiPicker';
-import CustomEmojiPicker from '../../../common/CustomEmojiPicker';
-import SymbolMenuFooter, { SymbolMenuTabs } from '../../../middle/composer/SymbolMenuFooter';
-import Transition from '../../../ui/Transition';
 
 export type OwnProps = {
   isOpen: boolean;
@@ -97,6 +97,8 @@ const FolderSymbolMenu: FC<OwnProps & StateProps> = ({
     event.stopPropagation();
   }
 
+  const handleSearchOpen = useCallback(() => {}, []);
+
   return (
     <Portal>
       <Menu
@@ -119,7 +121,7 @@ const FolderSymbolMenu: FC<OwnProps & StateProps> = ({
           activeTab={activeTab}
           onSwitchTab={setActiveTab}
           onRemoveSymbol={onRemoveSymbol}
-          onSearchOpen={() => {}}
+          onSearchOpen={handleSearchOpen}
           canSearch
           isAttachmentModal
           canSendPlainText

@@ -1,20 +1,24 @@
-import { ApiFormattedText } from '../../../api/types/messages';
+import type { FC, TeactNode } from '../../../lib/teact/teact';
+import React, { memo, useMemo, useRef } from '../../../lib/teact/teact';
+
+import type { ApiFormattedText } from '../../../api/types/messages';
+import type { MenuItemContextAction } from '../../ui/ListItem';
+
 import { FOLDER_EMOTICONS_TO_ICON } from '../../../config';
+import buildClassName from '../../../util/buildClassName';
+import { MouseButton } from '../../../util/windowEnvironment';
+import { renderTextWithEntities } from '../../common/helpers/renderTextWithEntities';
+
 import useContextMenuHandlers from '../../../hooks/useContextMenuHandlers';
 import { useFastClick } from '../../../hooks/useFastClick';
 import useLastCallback from '../../../hooks/useLastCallback';
-import type { FC, TeactNode } from '../../../lib/teact/teact';
-import React, { memo, useMemo, useRef } from '../../../lib/teact/teact';
-import buildClassName from '../../../util/buildClassName';
-import { MouseButton } from '../../../util/windowEnvironment';
+
 import Icon from '../../common/icons/Icon';
-import { MenuItemContextAction } from '../../ui/ListItem';
 import Menu from '../../ui/Menu';
 import MenuItem from '../../ui/MenuItem';
 import MenuSeparator from '../../ui/MenuSeparator';
 
 import styles from './Tab.module.scss';
-import { renderTextWithEntities } from '../../common/helpers/renderTextWithEntities';
 
 interface OwnProps {
   title: ApiFormattedText;
@@ -43,7 +47,7 @@ const Tab: FC<OwnProps> = ({
 }) => {
   const className = buildClassName(
     styles.tab,
-    isActive && styles.active
+    isActive && styles.active,
   );
 
   // eslint-disable-next-line no-null/no-null
@@ -55,7 +59,6 @@ const Tab: FC<OwnProps> = ({
   } = useContextMenuHandlers(tabRef, !contextActions);
 
   const { handleClick, handleMouseDown } = useFastClick((e: React.MouseEvent<HTMLDivElement>) => {
-    console.log('click', contextActions, (e.button === MouseButton.Secondary || !onClick), e.button, onClick, MouseButton.Secondary, MouseButton.Main);
     if (contextActions && (e.button === MouseButton.Secondary || !onClick)) {
       handleBeforeContextMenu(e);
     }
@@ -177,4 +180,4 @@ const Tab: FC<OwnProps> = ({
   );
 };
 
-export default memo(Tab); 
+export default memo(Tab);

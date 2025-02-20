@@ -7,11 +7,11 @@
   cursor: pointer;
   transition: background-color 0.15s;
   color: var(--color-text-secondary);
-  
+
   &:hover {
     background-color: var(--color-chat-hover);
   }
-  
+
   &.active {
     color: var(--color-primary);
   }
@@ -22,7 +22,7 @@
 .icon {
   font-size: 2rem;
   line-height: 1;
-  padding: 0.2rem;
+  padding: 0.1875rem;
   height: 40px;
 
   :global(.emoji) {
@@ -43,11 +43,11 @@
 
 .badge {
   position: absolute;
-  top: .3rem;
+  top: 0.3125rem;
   right: 1rem;
-  min-width: 1.2rem;
-  height: 1.2rem;
-  padding: 0 0.2rem;
+  min-width: 1.1875rem;
+  height: 1.1875rem;
+  padding: 0 0.1875rem;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -55,7 +55,7 @@
   background: var(--color-gray);
   color: white;
   font-weight: 700;
-  font-size: 0.7rem;
+  font-size: 0.6875rem;
   line-height: 1;
   outline: 2px solid var(--color-background);
 }
@@ -70,7 +70,7 @@
 
 .blocked {
   position: absolute;
-  top: .5rem;
+  top: 0.5rem;
   left: 1rem;
   font-size: 0.75rem;
 }

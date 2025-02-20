@@ -537,7 +537,7 @@ const Main = ({
 
   return (
     <div ref={containerRef} id="Main" className={className}>
-      <TabsColumn />
+      <TabsColumn forceDarkTheme />
       <LeftColumn ref={leftColumnRef} />
       <MiddleColumn leftColumnRef={leftColumnRef} isMobile={isMobile} />
       <RightColumn isMobile={isMobile} />

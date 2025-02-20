@@ -3,7 +3,6 @@ import React, {
   memo, useCallback, useEffect, useMemo, useState,
 } from '../../../../lib/teact/teact';
 import { getActions, getGlobal, withGlobal } from '../../../../global';
-import EMOJI_REGEX from '../../../../lib/twemojiRegex';
 
 import type { ApiChatlistExportedInvite, ApiSticker } from '../../../../api/types';
 import type {
@@ -12,15 +11,19 @@ import type {
 } from '../../../../hooks/reducers/useFoldersReducer';
 
 import { FOLDER_EMOTICONS_TO_ICON, STICKER_SIZE_FOLDER_SETTINGS } from '../../../../config';
+import EMOJI_REGEX from '../../../../lib/twemojiRegex';
 import { isUserId } from '../../../../global/helpers';
 import { selectCanShareFolder } from '../../../../global/selectors';
 import { selectCurrentLimit } from '../../../../global/selectors/limits';
 import { findIntersectionWithSet } from '../../../../util/iteratees';
 import { MEMO_EMPTY_ARRAY } from '../../../../util/memo';
 import { CUSTOM_PEER_EXCLUDED_CHAT_TYPES, CUSTOM_PEER_INCLUDED_CHAT_TYPES } from '../../../../util/objects/customPeer';
+import parseHtmlAsFormattedText from '../../../../util/parseHtmlAsFormattedText';
 import { LOCAL_TGS_URLS } from '../../../common/helpers/animatedAssets';
+import { buildCustomEmojiHtml } from '../../../middle/composer/helpers/customEmoji';
 
 import { selectChatFilters } from '../../../../hooks/reducers/useFoldersReducer';
+import useFlag from '../../../../hooks/useFlag';
 import useHistoryBack from '../../../../hooks/useHistoryBack';
 import useOldLang from '../../../../hooks/useOldLang';
 
@@ -32,9 +35,6 @@ import FloatingActionButton from '../../../ui/FloatingActionButton';
 import InputText from '../../../ui/InputText';
 import ListItem from '../../../ui/ListItem';
 import Spinner from '../../../ui/Spinner';
-import useFlag from '../../../../hooks/useFlag';
-import parseHtmlAsFormattedText from '../../../../util/parseHtmlAsFormattedText';
-import { buildCustomEmojiHtml } from '../../../middle/composer/helpers/customEmoji';
 import FolderSymbolMenuButton from './FolderSymbolMenuButton';
 
 type OwnProps = {
@@ -225,11 +225,11 @@ const SettingsFoldersEdit: FC<OwnProps & StateProps> = ({
   const [isSymbolMenuOpen, openSymbolMenu, closeSymbolMenu] = useFlag(false);
   const [selectedEmoji, setSelectedEmoji] = useState('');
 
-  const selectEmoji = (emoji: string) => {
+  const selectEmoji = useCallback((emoji: string) => {
     setSelectedEmoji(emoji);
     dispatch({ type: 'setEmoticon', payload: emoji });
     closeSymbolMenu();
-  };
+  }, [dispatch, closeSymbolMenu]);
 
   const handleCustomEmojiSelect = useCallback((emoji: ApiSticker) => {
     selectEmoji(emoji.emoji || '');
@@ -244,7 +244,7 @@ const SettingsFoldersEdit: FC<OwnProps & StateProps> = ({
         entities: customEmojiTitle.entities,
       },
     });
-  }, [selectEmoji]);
+  }, [selectEmoji, dispatch, state.folder.title.text]);
 
   const handleRemoveSymbol = useCallback(() => {
     selectEmoji('');
@@ -257,7 +257,7 @@ const SettingsFoldersEdit: FC<OwnProps & StateProps> = ({
         entities: [],
       },
     });
-  }, [selectEmoji]);
+  }, [selectEmoji, dispatch, state.folder.title.text]);
 
   const handleEmojiSelect = useCallback((emoji: string) => {
     selectEmoji(emoji);
@@ -279,7 +279,7 @@ const SettingsFoldersEdit: FC<OwnProps & StateProps> = ({
         },
       });
     }
-  }, [selectEmoji, state.folder.title.text]);
+  }, [selectEmoji, dispatch, state.folder.title.text]);
 
   function renderChatType(key: string, mode: 'included' | 'excluded') {
     const chatType = mode === 'included'
@@ -382,7 +382,7 @@ const SettingsFoldersEdit: FC<OwnProps & StateProps> = ({
               onCustomEmojiSelect={handleCustomEmojiSelect}
               onRemoveSymbol={handleRemoveSymbol}
               onEmojiSelect={handleEmojiSelect}
-              selectedEmoji={selectedEmoji ? selectedEmoji : (state.folder.emoticon || '')}
+              selectedEmoji={selectedEmoji || (state.folder.emoticon || '')}
               title={state.folder.title}
             />
           </div>
