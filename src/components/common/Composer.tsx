@@ -140,6 +140,7 @@ import useClipboardPaste from '../middle/composer/hooks/useClipboardPaste';
 import useCustomEmojiTooltip from '../middle/composer/hooks/useCustomEmojiTooltip';
 import useDraft from '../middle/composer/hooks/useDraft';
 import useEditing from '../middle/composer/hooks/useEditing';
+import useEditorHistory from '../middle/composer/hooks/useEditorHistory';
 import useEmojiTooltip from '../middle/composer/hooks/useEmojiTooltip';
 import useInlineBotTooltip from '../middle/composer/hooks/useInlineBotTooltip';
 import useMentionTooltip from '../middle/composer/hooks/useMentionTooltip';
@@ -513,6 +514,17 @@ const Composer: FC<OwnProps & StateProps> = ({
     }
   }, [hasWebPagePreview]);
 
+  const { saveState: saveHistoryState, clearState: clearHistoryState } = useEditorHistory(inputRef, getHtml, (html) => {
+    if (!inputRef.current || isComposerBlocked) return;
+
+    inputRef.current!.innerHTML = html;
+    inputRef.current!.dispatchEvent(new Event('input', { bubbles: true }));
+  });
+
+  const handleBeforeApplyTextFormat = useLastCallback(() => {
+    saveHistoryState(getHtml());
+  });
+
   const insertHtmlAndUpdateCursor = useLastCallback((newHtml: string, inInputId: string = editableInputId) => {
     if (inInputId === editableInputId && isComposerBlocked) return;
     const selection = window.getSelection()!;
@@ -536,8 +548,10 @@ const Composer: FC<OwnProps & StateProps> = ({
 
     // If selection is outside of input, set cursor at the end of input
     requestNextMutation(() => {
-      focusEditableElement(messageInput);
+      focusEditableElement(messageInput, undefined, true);
     });
+
+    saveHistoryState(getHtml());
   });
 
   const insertTextAndUpdateCursor = useLastCallback((
@@ -755,6 +769,8 @@ const Composer: FC<OwnProps & StateProps> = ({
     } else {
       closeSymbolMenu();
     }
+
+    clearHistoryState();
   });
 
   const [handleEditComplete, handleEditCancel, shouldForceShowEditing] = useEditing(
@@ -1165,7 +1181,7 @@ const Composer: FC<OwnProps & StateProps> = ({
 
       requestNextMutation(() => {
         const messageInput = document.getElementById(editableInputId)!;
-        focusEditableElement(messageInput, true);
+        focusEditableElement(messageInput, true, true);
       });
     }
   }, [editableInputId, requestedDraft, resetOpenChatWithDraft, setHtml]);
@@ -1858,6 +1874,7 @@ const Composer: FC<OwnProps & StateProps> = ({
             onFocus={markInputHasFocus}
             onBlur={unmarkInputHasFocus}
             isNeedPremium={isNeedPremium}
+            beforeApplyTextFormat={handleBeforeApplyTextFormat}
           />
           {isInMessageList && (
             <>

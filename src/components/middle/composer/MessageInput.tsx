@@ -75,6 +75,7 @@ type OwnProps = {
   onFocus?: NoneToVoidFunction;
   onBlur?: NoneToVoidFunction;
   isNeedPremium?: boolean;
+  beforeApplyTextFormat?: () => void;
 };
 
 type StateProps = {
@@ -141,6 +142,7 @@ const MessageInput: FC<OwnProps & StateProps> = ({
   onFocus,
   onBlur,
   isNeedPremium,
+  beforeApplyTextFormat,
 }) => {
   const {
     editLastMessage,
@@ -280,46 +282,54 @@ const MessageInput: FC<OwnProps & StateProps> = ({
   });
 
   function checkStuckInsideSpecialTags(e: React.KeyboardEvent<HTMLDivElement>) {
+    if (!(e.key === 'ArrowRight' || e.key === 'ArrowDown' || (e.key === 'Enter' && e.shiftKey))) return;
+
     const selection = window.getSelection();
     if (!selection) return;
-  
-    const baseNode = selection.baseNode;
+
+    let baseNode = selection.anchorNode as Element;
     if (!baseNode?.parentNode) return;
 
-    const isInSpecialTag = ['BLOCKQUOTE', 'CODE', 'SPAN'].includes(baseNode.parentNode.tagName);
+    const formattedTags = ['U', 'B', 'I', 'DEL', 'S', 'A'];
+    const specialTags = ['BLOCKQUOTE', 'CODE', 'SPAN'];
 
-    if (isInSpecialTag && (e.key === 'ArrowRight' || (e.key === 'Enter' && e.shiftKey))) {
-      const range = selection.getRangeAt(0);
-      const isAtEnd = range.endOffset === baseNode.textContent?.length;
-      
-      const parentNode = baseNode.parentNode;
-      const isLastNode = !parentNode.nextSibling || 
-        (parentNode.nextSibling.nodeType === Node.TEXT_NODE && !parentNode.nextSibling.textContent);
-
-      if (isAtEnd && isLastNode) {
-        e.preventDefault();
-
-        const spaceNode = document.createTextNode(e.key === 'Enter' ? '\n' : ' ');
-        if (parentNode.nextSibling) {
-          inputRef.current?.insertBefore(spaceNode, parentNode.nextSibling);
-        } else {
-          inputRef.current?.appendChild(spaceNode);
-        }
-
-        // Trigger change event to update input height
-        const syntheticEvent = {
-          target: inputRef.current,
-          currentTarget: inputRef.current,
-        } as React.ChangeEvent<HTMLDivElement>;
-        handleChange(syntheticEvent);
-
-        const newRange = document.createRange();
-        newRange.setStartAfter(spaceNode);
-        newRange.collapse(true);
-        selection.removeAllRanges();
-        selection.addRange(newRange);
-      }
+    let parentNode = baseNode.parentNode as Element;
+    let isFormattedNode = formattedTags.includes(parentNode.tagName);
+    let isInSpecialTag = specialTags.includes(parentNode.tagName);
+    while (!isInSpecialTag && isFormattedNode && baseNode.parentNode && baseNode.parentNode !== inputRef.current) {
+      baseNode = baseNode.parentNode as Element;
+      parentNode = baseNode.parentNode as Element;
+      isFormattedNode = formattedTags.includes(parentNode.tagName);
+      isInSpecialTag = specialTags.includes(parentNode.tagName);
     }
+
+    if (!isInSpecialTag) return;
+
+    const range = selection.getRangeAt(0);
+    const isAtEnd = range.endOffset === baseNode.textContent?.length;
+
+    const isLastNode = !parentNode.nextSibling
+      || (parentNode.nextSibling.nodeType === Node.TEXT_NODE && !parentNode.nextSibling.textContent);
+
+    if (!isAtEnd || !isLastNode) return;
+
+    e.preventDefault();
+
+    const escapeNode = document.createTextNode('\n');
+    if (parentNode.nextSibling) {
+      inputRef.current?.insertBefore(escapeNode, parentNode.nextSibling);
+    } else {
+      inputRef.current?.appendChild(escapeNode);
+    }
+
+    // Trigger change event to update input height
+    const syntheticEvent = {
+      target: inputRef.current,
+      currentTarget: inputRef.current,
+    } as React.ChangeEvent<HTMLDivElement>;
+    handleChange(syntheticEvent);
+
+    selection.setPosition(escapeNode, 0);
   }
 
   function checkSelection() {
@@ -477,7 +487,7 @@ const MessageInput: FC<OwnProps & StateProps> = ({
       if (selection) {
         inputRef.current!.blur();
         selection.removeAllRanges();
-        focusEditableElement(inputRef.current!, true);
+        focusEditableElement(inputRef.current!, true, true);
       }
     }
   }
@@ -681,6 +691,7 @@ const MessageInput: FC<OwnProps & StateProps> = ({
         selectedRange={selectedRange}
         setSelectedRange={setSelectedRange}
         onClose={handleCloseTextFormatter}
+        beforeApply={beforeApplyTextFormat}
       />
       {forcedPlaceholder && <span className="forced-placeholder">{renderText(forcedPlaceholder!)}</span>}
     </div>

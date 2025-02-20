@@ -31,6 +31,7 @@ export type OwnProps = {
   selectedRange?: Range;
   setSelectedRange: (range: Range) => void;
   onClose: () => void;
+  beforeApply?: () => void;
 };
 
 interface ISelectedTextFormats {
@@ -62,6 +63,7 @@ const TextFormatter: FC<OwnProps> = ({
   selectedRange,
   setSelectedRange,
   onClose,
+  beforeApply,
 }) => {
   // eslint-disable-next-line no-null/no-null
   const containerRef = useRef<HTMLDivElement>(null);
@@ -233,6 +235,7 @@ const TextFormatter: FC<OwnProps> = ({
       return;
     }
 
+    beforeApply?.();
     const text = getSelectedText();
     document.execCommand(
       'insertHTML', false, `<span class="spoiler" data-entity-type="${ApiMessageEntityTypes.Spoiler}">${text}</span>`,
@@ -241,6 +244,7 @@ const TextFormatter: FC<OwnProps> = ({
   });
 
   const handleBoldText = useLastCallback(() => {
+    beforeApply?.();
     setSelectedTextFormats((selectedFormats) => {
       // Somehow re-applying 'bold' command to already bold text doesn't work
       document.execCommand(selectedFormats.bold ? 'removeFormat' : 'bold');
@@ -259,6 +263,7 @@ const TextFormatter: FC<OwnProps> = ({
   });
 
   const handleItalicText = useLastCallback(() => {
+    beforeApply?.();
     document.execCommand('italic');
     updateSelectedRange();
     setSelectedTextFormats((selectedFormats) => ({
@@ -268,6 +273,7 @@ const TextFormatter: FC<OwnProps> = ({
   });
 
   const handleUnderlineText = useLastCallback(() => {
+    beforeApply?.();
     document.execCommand('underline');
     updateSelectedRange();
     setSelectedTextFormats((selectedFormats) => ({
@@ -297,6 +303,7 @@ const TextFormatter: FC<OwnProps> = ({
       return;
     }
 
+    beforeApply?.();
     const text = getSelectedText();
     document.execCommand('insertHTML', false, `<del>${text}</del>`);
     onClose();
@@ -324,6 +331,7 @@ const TextFormatter: FC<OwnProps> = ({
       return;
     }
 
+    beforeApply?.();
     const text = getSelectedText(true);
     document.execCommand('insertHTML', false, `<code class="text-entity-code" dir="auto">${text}</code>`);
     onClose();
@@ -352,6 +360,7 @@ const TextFormatter: FC<OwnProps> = ({
       return;
     }
 
+    beforeApply?.();
     const text = getSelectedText();
     document.execCommand('insertHTML', false, `<blockquote class="blockquote" dir="auto">${text}</blockquote>`);
     onClose();
@@ -375,14 +384,15 @@ const TextFormatter: FC<OwnProps> = ({
       return;
     }
 
+    beforeApply?.();
     const text = getSelectedText(true);
+    restoreSelection();
     document.execCommand(
       'insertHTML',
       false,
       `<a href=${formattedLinkUrl} class="text-entity-link" dir="auto">${text}</a>`,
     );
     onClose();
-    restoreSelection();
   });
 
   const handleKeyDown = useLastCallback((e: KeyboardEvent) => {
