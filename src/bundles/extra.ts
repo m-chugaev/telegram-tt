@@ -25,6 +25,7 @@ export { default as BoostModal } from '../components/modals/boost/BoostModal';
 export { default as GiftCodeModal } from '../components/modals/giftcode/GiftCodeModal';
 export { default as ChatlistModal } from '../components/modals/chatlist/ChatlistModal';
 export { default as ChatInviteModal } from '../components/modals/chatInvite/ChatInviteModal';
+export { default as FolderSymbolMenu } from '../components/left/settings/folders/FolderSymbolMenu';
 
 export { default as AboutAdsModal } from '../components/modals/aboutAds/AboutAdsModal';
 export { default as AboutMonetizationModal } from '../components/common/AboutMonetizationModal';

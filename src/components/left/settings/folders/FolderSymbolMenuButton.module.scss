@@ -1,0 +1,19 @@
+.button {
+  font-size: 1.875rem;
+  height: 100%;
+  max-height: 3rem;
+  width: 3rem;
+  border-radius: var(--border-radius-default);
+  padding: 0.1875rem;
+  cursor: pointer;
+
+  :global(.icon) {
+    opacity: 0.7;
+  }
+
+  :global(.emoji) {
+    --custom-emoji-size: 2rem;
+    width: 2rem;
+    height: 2rem;
+  }
+}

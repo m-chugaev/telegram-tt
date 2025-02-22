@@ -13,11 +13,14 @@ import type {
   EmojiRawData,
 } from '../../../util/emoji/emoji';
 
-import { MENU_TRANSITION_DURATION, RECENT_SYMBOL_SET_ID } from '../../../config';
+import {
+  FOLDER_EMOTICONS_TO_EMOJI, FOLDER_SYMBOL_SET_ID, MENU_TRANSITION_DURATION, RECENT_SYMBOL_SET_ID, SEARCH_SYMBOL_SET_ID,
+} from '../../../config';
 import animateHorizontalScroll from '../../../util/animateHorizontalScroll';
 import animateScroll from '../../../util/animateScroll';
 import buildClassName from '../../../util/buildClassName';
 import { uncompressEmoji } from '../../../util/emoji/emoji';
+import filterObjectKeys from '../../../util/filterObjectKeys';
 import { pick } from '../../../util/iteratees';
 import { MEMO_EMPTY_ARRAY } from '../../../util/memo';
 import { IS_TOUCH_ENV } from '../../../util/windowEnvironment';
@@ -26,14 +29,15 @@ import { REM } from '../../common/helpers/mediaDimensions';
 import useAppLayout from '../../../hooks/useAppLayout';
 import useHorizontalScroll from '../../../hooks/useHorizontalScroll';
 import { useIntersectionObserver } from '../../../hooks/useIntersectionObserver';
+import useLang from '../../../hooks/useLang';
 import useLastCallback from '../../../hooks/useLastCallback';
-import useOldLang from '../../../hooks/useOldLang';
 import useScrolledState from '../../../hooks/useScrolledState';
 import useAsyncRendering from '../../right/hooks/useAsyncRendering';
 
 import Icon from '../../common/icons/Icon';
 import Button from '../../ui/Button';
 import Loading from '../../ui/Loading';
+import SearchInput from '../../ui/SearchInput';
 import EmojiCategory from './EmojiCategory';
 
 import './EmojiPicker.scss';
@@ -41,6 +45,9 @@ import './EmojiPicker.scss';
 type OwnProps = {
   className?: string;
   onEmojiSelect: (emoji: string, name: string) => void;
+  hideRecentEmojis?: boolean;
+  showFolderEmojis?: boolean;
+  withSearch?: boolean;
 };
 
 type StateProps = Pick<GlobalState, 'recentEmojis'>;
@@ -75,6 +82,9 @@ const EmojiPicker: FC<OwnProps & StateProps> = ({
   className,
   recentEmojis,
   onEmojiSelect,
+  hideRecentEmojis,
+  showFolderEmojis,
+  withSearch,
 }) => {
   // eslint-disable-next-line no-null/no-null
   const containerRef = useRef<HTMLDivElement>(null);
@@ -83,7 +93,11 @@ const EmojiPicker: FC<OwnProps & StateProps> = ({
 
   const [categories, setCategories] = useState<EmojiCategoryData[]>();
   const [emojis, setEmojis] = useState<AllEmojis>();
+  const [filteredEmojis, setFilteredEmojis] = useState<AllEmojis>({});
   const [activeCategoryIndex, setActiveCategoryIndex] = useState(0);
+  const [containerWidth, setContainerWidth] = useState(0);
+  const [isSearchActive, setIsSearchActive] = useState(false);
+  const [resetSearchInput, setResetSearchInput] = useState(false);
   const { isMobile } = useAppLayout();
   const {
     handleScroll: handleContentScroll,
@@ -136,14 +150,23 @@ const EmojiPicker: FC<OwnProps & StateProps> = ({
     animateHorizontalScroll(header, newLeft);
   }, [categories, activeCategoryIndex]);
 
-  const lang = useOldLang();
+  useEffect(() => {
+    if (!containerRef.current) {
+      return;
+    }
+
+    setContainerWidth(containerRef.current.clientWidth);
+  }, [containerRef]);
+
+  const lang = useLang();
 
   const allCategories = useMemo(() => {
     if (!categories) {
       return MEMO_EMPTY_ARRAY;
     }
+
     const themeCategories = [...categories];
-    if (recentEmojis?.length) {
+    if (recentEmojis?.length && !hideRecentEmojis) {
       themeCategories.unshift({
         id: RECENT_SYMBOL_SET_ID,
         name: lang('RecentStickers'),
@@ -151,8 +174,16 @@ const EmojiPicker: FC<OwnProps & StateProps> = ({
       });
     }
 
+    if (showFolderEmojis) {
+      themeCategories.unshift({
+        id: FOLDER_SYMBOL_SET_ID,
+        name: '',
+        emojis: Object.values(FOLDER_EMOTICONS_TO_EMOJI),
+      });
+    }
+
     return themeCategories;
-  }, [categories, lang, recentEmojis]);
+  }, [categories, lang, recentEmojis, hideRecentEmojis, showFolderEmojis]);
 
   // Initialize data on first render.
   useEffect(() => {
@@ -173,20 +204,46 @@ const EmojiPicker: FC<OwnProps & StateProps> = ({
   }, []);
 
   const selectCategory = useLastCallback((index: number) => {
+    setIsSearchActive(false);
+    setFilteredEmojis({});
+    setResetSearchInput(true);
     setActiveCategoryIndex(index);
-    const categoryEl = containerRef.current!.closest<HTMLElement>('.SymbolMenu-main')!
-      .querySelector(`#emoji-category-${index}`)! as HTMLElement;
-    animateScroll({
-      container: containerRef.current!,
-      element: categoryEl,
-      position: 'start',
-      margin: FOCUS_MARGIN,
-      maxDistance: SMOOTH_SCROLL_DISTANCE,
-    });
+
+    // Need time to render categories again
+    setTimeout(() => {
+      const categoryEl = containerRef.current!.closest<HTMLElement>('.SymbolMenu-main')!
+        .querySelector(`#emoji-category-${index}`)! as HTMLElement;
+
+      if (!categoryEl) {
+        return;
+      }
+
+      animateScroll({
+        container: containerRef.current!,
+        element: categoryEl,
+        position: 'start',
+        margin: FOCUS_MARGIN,
+        maxDistance: SMOOTH_SCROLL_DISTANCE,
+      });
+    }, 100);
   });
 
   const handleEmojiSelect = useLastCallback((emoji: string, name: string) => {
     onEmojiSelect(emoji, name);
+  });
+
+  const handleSearch = useLastCallback((value: string) => {
+    if (!value) {
+      setIsSearchActive(false);
+      setFilteredEmojis({});
+      return;
+    }
+
+    const newFilteredEmojis = filterObjectKeys(emojiData.emojis, value);
+
+    setIsSearchActive(true);
+    setFilteredEmojis(newFilteredEmojis as AllEmojis);
+    setResetSearchInput(false);
   });
 
   function renderCategoryButton(category: EmojiCategoryData, index: number) {
@@ -236,16 +293,53 @@ const EmojiPicker: FC<OwnProps & StateProps> = ({
         onScroll={handleContentScroll}
         className={buildClassName('EmojiPicker-main', IS_TOUCH_ENV ? 'no-scrollbar' : 'custom-scroll')}
       >
-        {allCategories.map((category, i) => (
-          <EmojiCategory
-            category={category}
-            index={i}
-            allEmojis={emojis}
-            observeIntersection={observeIntersection}
-            shouldRender={activeCategoryIndex >= i - 1 && activeCategoryIndex <= i + 1}
-            onEmojiSelect={handleEmojiSelect}
-          />
-        ))}
+        {withSearch && (
+          <div className="EmojiPicker-search">
+            <SearchInput
+              className="EmojiPicker-search-input"
+              placeholder={lang('SearchEmoji')}
+              focused={false}
+              onChange={handleSearch}
+              forceReset={resetSearchInput}
+            />
+          </div>
+        )}
+        {isSearchActive ? (
+          <div>
+            {Object.keys(filteredEmojis).length > 0 ? (
+              <EmojiCategory
+                category={{
+                  id: SEARCH_SYMBOL_SET_ID,
+                  name: '',
+                  emojis: Object.keys(filteredEmojis),
+                }}
+                index={0}
+                allEmojis={filteredEmojis}
+                observeIntersection={observeIntersection}
+                shouldRender
+                onEmojiSelect={handleEmojiSelect}
+                containerWidth={containerWidth}
+              />
+            ) : (
+              <div className="EmojiPicker-search-results">
+                <i className="icon icon-search" aria-hidden="true" />
+                {lang('NoEmojiFound')}
+              </div>
+            )}
+          </div>
+        ) : (
+          allCategories.map((category, i) => (
+            <EmojiCategory
+              category={category}
+              index={i}
+              allEmojis={emojis}
+              observeIntersection={observeIntersection}
+              shouldRender={activeCategoryIndex >= i - 1 && activeCategoryIndex <= i + 1}
+              onEmojiSelect={handleEmojiSelect}
+              containerWidth={containerWidth}
+            />
+          ))
+        )}
       </div>
     </div>
   );

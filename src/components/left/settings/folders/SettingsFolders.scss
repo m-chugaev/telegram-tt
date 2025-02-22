@@ -117,3 +117,15 @@
   flex-direction: column;
   overflow: hidden;
 }
+
+.settings-folders-input-wrapper {
+  position: relative;
+  width: 100%;
+}
+
+.settings-symbol-button {
+  position: absolute;
+  right: 1px;
+  top: 1px;
+  bottom: 1px;
+}

@@ -64,6 +64,7 @@ import type {
   IAnchorPosition,
   ISettings,
   IThemeSettings,
+  LeftColumnContent,
   LoadMoreDirection,
   ManagementScreens,
   MediaViewerMedia,
@@ -368,7 +369,7 @@ export interface ActionPayloads {
   loadRecommendedChatFolders: undefined;
   editChatFolder: {
     id: number;
-    folderUpdate: Omit<ApiChatFolder, 'id' | 'description' | 'emoticon'>;
+    folderUpdate: Omit<ApiChatFolder, 'id' | 'description'>;
   };
   addChatFolder: {
     folder: ApiChatFolder;
@@ -2218,6 +2219,9 @@ export interface ActionPayloads {
   } | undefined;
   loadPeerColors: undefined;
   loadTimezones: undefined;
+  requestNextContentScreen: {
+    screen?: LeftColumnContent;
+  } & WithTabId;
   requestNextSettingsScreen: {
     screen?: SettingsScreens;
     foldersAction?: ReducerAction<FoldersActions>;

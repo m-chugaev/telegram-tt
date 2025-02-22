@@ -1,0 +1,9 @@
+.wrapper {
+  overflow-x: auto;
+  scrollbar-width: none;
+  padding: 0.5rem 0;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}

@@ -471,6 +471,7 @@
 "FilterNew" = "New Folder";
 "FilterEdit" = "Edit folder";
 "FilterDelete" = "Delete folder";
+"FilterEditAll" = "Edit Folders";
 "FilterShare" = "Share";
 "AutoDeleteConfirm" = "Confirm";
 "LogOutTitle" = "Log Out";
@@ -1602,3 +1603,5 @@
 "CheckPasswordTitle" = "Enter Password";
 "CheckPasswordPlaceholder" = "Password";
 "CheckPasswordDescription" = "Please enter your password to continue.";
+"SearchEmoji" = "Search Emoji";
+"NoEmojiFound" = "No emoji found";

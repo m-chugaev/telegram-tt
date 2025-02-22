@@ -4,22 +4,26 @@ import React, {
 } from '../../../../lib/teact/teact';
 import { getActions, getGlobal, withGlobal } from '../../../../global';
 
-import type { ApiChatlistExportedInvite } from '../../../../api/types';
+import type { ApiChatlistExportedInvite, ApiSticker } from '../../../../api/types';
 import type {
   FolderEditDispatch,
   FoldersState,
 } from '../../../../hooks/reducers/useFoldersReducer';
 
-import { STICKER_SIZE_FOLDER_SETTINGS } from '../../../../config';
+import { FOLDER_EMOTICONS_TO_ICON, STICKER_SIZE_FOLDER_SETTINGS } from '../../../../config';
+import EMOJI_REGEX from '../../../../lib/twemojiRegex';
 import { isUserId } from '../../../../global/helpers';
 import { selectCanShareFolder } from '../../../../global/selectors';
 import { selectCurrentLimit } from '../../../../global/selectors/limits';
 import { findIntersectionWithSet } from '../../../../util/iteratees';
 import { MEMO_EMPTY_ARRAY } from '../../../../util/memo';
 import { CUSTOM_PEER_EXCLUDED_CHAT_TYPES, CUSTOM_PEER_INCLUDED_CHAT_TYPES } from '../../../../util/objects/customPeer';
+import parseHtmlAsFormattedText from '../../../../util/parseHtmlAsFormattedText';
 import { LOCAL_TGS_URLS } from '../../../common/helpers/animatedAssets';
+import { buildCustomEmojiHtml } from '../../../middle/composer/helpers/customEmoji';
 
 import { selectChatFilters } from '../../../../hooks/reducers/useFoldersReducer';
+import useFlag from '../../../../hooks/useFlag';
 import useHistoryBack from '../../../../hooks/useHistoryBack';
 import useOldLang from '../../../../hooks/useOldLang';
 
@@ -31,6 +35,7 @@ import FloatingActionButton from '../../../ui/FloatingActionButton';
 import InputText from '../../../ui/InputText';
 import ListItem from '../../../ui/ListItem';
 import Spinner from '../../../ui/Spinner';
+import FolderSymbolMenuButton from './FolderSymbolMenuButton';
 
 type OwnProps = {
   state: FoldersState;
@@ -153,7 +158,12 @@ const SettingsFoldersEdit: FC<OwnProps & StateProps> = ({
 
   const handleChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
     const { currentTarget } = event;
-    dispatch({ type: 'setTitle', payload: currentTarget.value.trim() });
+    dispatch({
+      type: 'setTitle',
+      payload: {
+        text: currentTarget.value.trim(),
+      },
+    });
   }, [dispatch]);
 
   const handleSubmit = useCallback(() => {
@@ -211,6 +221,65 @@ const SettingsFoldersEdit: FC<OwnProps & StateProps> = ({
       onOpenInvite(url);
     }
   }, [onSaveFolder, onOpenInvite, state.isTouched]);
+
+  const [isSymbolMenuOpen, openSymbolMenu, closeSymbolMenu] = useFlag(false);
+  const [selectedEmoji, setSelectedEmoji] = useState('');
+
+  const selectEmoji = useCallback((emoji: string) => {
+    setSelectedEmoji(emoji);
+    dispatch({ type: 'setEmoticon', payload: emoji });
+    closeSymbolMenu();
+  }, [dispatch, closeSymbolMenu]);
+
+  const handleCustomEmojiSelect = useCallback((emoji: ApiSticker) => {
+    selectEmoji(emoji.emoji || '');
+    const currentTitle = state.folder.title.text;
+    const titleWithoutEmoji = currentTitle.replace(EMOJI_REGEX, '');
+    const customEmojiTitle = parseHtmlAsFormattedText(titleWithoutEmoji.trim() + buildCustomEmojiHtml(emoji!));
+
+    dispatch({
+      type: 'setTitle',
+      payload: {
+        text: `${customEmojiTitle.text}`.trim(),
+        entities: customEmojiTitle.entities,
+      },
+    });
+  }, [selectEmoji, dispatch, state.folder.title.text]);
+
+  const handleRemoveSymbol = useCallback(() => {
+    selectEmoji('');
+    const currentTitle = state.folder.title.text;
+    const titleWithoutEmoji = currentTitle.replace(EMOJI_REGEX, '');
+    dispatch({
+      type: 'setTitle',
+      payload: {
+        text: titleWithoutEmoji.trim(),
+        entities: [],
+      },
+    });
+  }, [selectEmoji, dispatch, state.folder.title.text]);
+
+  const handleEmojiSelect = useCallback((emoji: string) => {
+    selectEmoji(emoji);
+    const currentTitle = state.folder.title.text;
+    const titleWithoutEmoji = currentTitle.replace(EMOJI_REGEX, '');
+
+    if (Object.keys(FOLDER_EMOTICONS_TO_ICON).includes(emoji)) {
+      dispatch({
+        type: 'setTitle',
+        payload: {
+          text: titleWithoutEmoji.trim(),
+        },
+      });
+    } else {
+      dispatch({
+        type: 'setTitle',
+        payload: {
+          text: `${titleWithoutEmoji}${emoji}`.trim(),
+        },
+      });
+    }
+  }, [selectEmoji, dispatch, state.folder.title.text]);
 
   function renderChatType(key: string, mode: 'included' | 'excluded') {
     const chatType = mode === 'included'
@@ -296,13 +365,27 @@ const SettingsFoldersEdit: FC<OwnProps & StateProps> = ({
             </p>
           )}
 
-          <InputText
-            className="mb-0"
-            label={lang('FilterNameHint')}
-            value={state.folder.title.text}
-            onChange={handleChange}
-            error={state.error && state.error === ERROR_NO_TITLE ? ERROR_NO_TITLE : undefined}
-          />
+          <div className="settings-folders-input-wrapper">
+            <InputText
+              className="mb-0"
+              label={lang('FilterNameHint')}
+              value={state.folder.title.text}
+              onChange={handleChange}
+              error={state.error && state.error === ERROR_NO_TITLE ? ERROR_NO_TITLE : undefined}
+            />
+
+            <FolderSymbolMenuButton
+              className="settings-symbol-button"
+              isSymbolMenuOpen={isSymbolMenuOpen}
+              openSymbolMenu={openSymbolMenu}
+              closeSymbolMenu={closeSymbolMenu}
+              onCustomEmojiSelect={handleCustomEmojiSelect}
+              onRemoveSymbol={handleRemoveSymbol}
+              onEmojiSelect={handleEmojiSelect}
+              selectedEmoji={selectedEmoji || (state.folder.emoticon || '')}
+              title={state.folder.title}
+            />
+          </div>
         </div>
 
         {!isOnlyInvites && (

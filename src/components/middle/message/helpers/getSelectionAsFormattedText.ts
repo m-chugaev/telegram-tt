@@ -15,7 +15,7 @@ const ALLOWED_QUOTE_ENTITIES = new Set([
 
 export function getSelectionAsFormattedText(range: Range) {
   const html = getSelectionAsHtml(range);
-  const formattedText = parseHtmlAsFormattedText(html, false, true);
+  const formattedText = parseHtmlAsFormattedText(html, true);
 
   return stripEntitiesForQuote(formattedText);
 }

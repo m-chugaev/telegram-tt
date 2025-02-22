@@ -38,6 +38,7 @@ $color-white: #ffffff;
 $color-black: #000000;
 $color-dark-gray: #2e3939;
 $color-gray: #c4c9cc;
+$color-graphite: #9ba0a4;
 $color-text-secondary: #707579;
 $color-text-secondary-apple: #8a8a90;
 $color-text-meta: #686c72;
@@ -165,6 +166,7 @@ $color-message-story-mention-to: #74bcff;
 
   --color-white: #{$color-white};
   --color-gray: #{$color-gray};
+  --color-graphite: #{$color-graphite};
 
   --color-chat-username: #3C7EB0;
   --color-chat-hover: #{$color-chat-hover};

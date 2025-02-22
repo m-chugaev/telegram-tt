@@ -237,6 +237,20 @@
     }
   }
 
+  &.translucent-graphite {
+    --ripple-color: var(--color-background-selected);
+    background-color: transparent;
+    color: var(--color-graphite);
+
+    @include active-styles() {
+      background-color: var(--color-background-selected);
+    }
+
+    @include no-ripple-styles() {
+      background-color: var(--color-background-selected);
+    }
+  }
+
   &.adaptive {
     --ripple-color: var(--accent-background-active-color);
     background-color: var(--accent-background-color);

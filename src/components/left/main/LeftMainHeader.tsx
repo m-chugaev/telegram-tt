@@ -258,6 +258,7 @@ const LeftMainHeader: FC<OwnProps & StateProps> = ({
           footer={`${APP_NAME} ${versionString}`}
           className={buildClassName(
             'main-menu',
+            !hasMenu && 'no-menu',
             oldLang.isRtl && 'rtl',
             shouldHideSearch && oldLang.isRtl && 'right-aligned',
             shouldDisableDropdownMenuTransitionRef.current && oldLang.isRtl && 'disable-transition',

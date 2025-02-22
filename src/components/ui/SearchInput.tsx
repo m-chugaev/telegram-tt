@@ -39,6 +39,7 @@ type OwnProps = {
   hasDownButton?: boolean;
   teactExperimentControlled?: boolean;
   withBackIcon?: boolean;
+  forceReset?: boolean;
   onChange: (value: string) => void;
   onStartBackspace?: NoneToVoidFunction;
   onReset?: NoneToVoidFunction;
@@ -79,6 +80,7 @@ const SearchInput: FC<OwnProps> = ({
   onUpClick,
   onDownClick,
   onSpinnerClick,
+  forceReset,
 }) => {
   // eslint-disable-next-line no-null/no-null
   let inputRef = useRef<HTMLInputElement>(null);
@@ -101,6 +103,12 @@ const SearchInput: FC<OwnProps> = ({
       inputRef.current.blur();
     }
   }, [focused, placeholder]); // Trick for setting focus when selecting a contact to search for
+
+  useEffect(() => {
+    if (forceReset && inputRef.current) {
+      inputRef.current.value = '';
+    }
+  }, [forceReset]);
 
   const oldLang = useOldLang();
   const lang = useLang();

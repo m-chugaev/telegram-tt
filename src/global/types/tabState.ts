@@ -61,6 +61,7 @@ import type {
   IAlbum,
   IAnchorPosition,
   InlineBotSettings,
+  LeftColumnContent,
   ManagementProgress,
   ManagementState,
   MediaViewerMedia,
@@ -116,6 +117,7 @@ export type TabState = {
   shouldCloseRightColumn?: boolean;
   nextProfileTab?: ProfileTabType;
   forceScrollProfileTab?: boolean;
+  nextContentScreen?: LeftColumnContent;
   nextSettingsScreen?: SettingsScreens;
   nextFoldersAction?: ReducerAction<FoldersActions>;
   shareFolderScreen?: {
