@@ -514,7 +514,10 @@ const Composer: FC<OwnProps & StateProps> = ({
     }
   }, [hasWebPagePreview]);
 
-  const { saveState: saveHistoryState, clearState: clearHistoryState } = useEditorHistory(inputRef, getHtml, (html) => {
+  const {
+    saveState: saveHistoryState,
+    clearState: clearHistoryState,
+  } = useEditorHistory(inputRef, getSelectionRange, getHtml, (html) => {
     if (!inputRef.current || isComposerBlocked) return;
 
     inputRef.current!.innerHTML = html;
@@ -561,6 +564,7 @@ const Composer: FC<OwnProps & StateProps> = ({
       .join('')
       .replace(/\u200b+/g, '\u200b');
     insertHtmlAndUpdateCursor(newHtml, inInputId);
+    saveHistoryState(getHtml());
   });
 
   const insertFormattedTextAndUpdateCursor = useLastCallback((
@@ -572,6 +576,7 @@ const Composer: FC<OwnProps & StateProps> = ({
 
   const insertCustomEmojiAndUpdateCursor = useLastCallback((emoji: ApiSticker, inInputId: string = editableInputId) => {
     insertHtmlAndUpdateCursor(buildCustomEmojiHtml(emoji), inInputId);
+    saveHistoryState(getHtml());
   });
 
   const insertNextText = useLastCallback(() => {
@@ -1525,6 +1530,11 @@ const Composer: FC<OwnProps & StateProps> = ({
     className,
   );
 
+  const handleEmojiSelect = useLastCallback((emoji: string | ApiSticker, isForce?: any) => {
+    insertEmoji(emoji, isForce);
+    saveHistoryState(getHtml());
+  });
+
   const handleToggleReaction = useLastCallback((reaction: ApiReaction) => {
     let text: string | undefined;
     let entities: ApiMessageEntity[] | undefined;
@@ -1972,8 +1982,8 @@ const Composer: FC<OwnProps & StateProps> = ({
             customEmojis={filteredCustomEmojis}
             addRecentEmoji={addRecentEmoji}
             addRecentCustomEmoji={addRecentCustomEmoji}
-            onEmojiSelect={insertEmoji}
-            onCustomEmojiSelect={insertEmoji}
+            onEmojiSelect={handleEmojiSelect}
+            onCustomEmojiSelect={handleEmojiSelect}
             onClose={closeEmojiTooltip}
           />
         </div>

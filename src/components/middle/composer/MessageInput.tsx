@@ -291,23 +291,23 @@ const MessageInput: FC<OwnProps & StateProps> = ({
     if (!baseNode?.parentNode) return;
 
     const formattedTags = ['U', 'B', 'I', 'DEL', 'S', 'A'];
-    const specialTags = ['BLOCKQUOTE', 'CODE', 'SPAN'];
+    const specialTags = ['BLOCKQUOTE', 'CODE'];
+    const specialTagClasses = ['spoiler'];
 
     let parentNode = baseNode.parentNode as Element;
     let isFormattedNode = formattedTags.includes(parentNode.tagName);
-    let isInSpecialTag = specialTags.includes(parentNode.tagName);
+    let isInSpecialTag = specialTags.includes(parentNode.tagName) || specialTagClasses.includes(parentNode.className);
     while (!isInSpecialTag && isFormattedNode && baseNode.parentNode && baseNode.parentNode !== inputRef.current) {
       baseNode = baseNode.parentNode as Element;
       parentNode = baseNode.parentNode as Element;
       isFormattedNode = formattedTags.includes(parentNode.tagName);
-      isInSpecialTag = specialTags.includes(parentNode.tagName);
+      isInSpecialTag = specialTags.includes(parentNode.tagName) || specialTagClasses.includes(parentNode.className);
     }
 
     if (!isInSpecialTag) return;
 
     const range = selection.getRangeAt(0);
     const isAtEnd = range.endOffset === baseNode.textContent?.length;
-
     const isLastNode = !parentNode.nextSibling
       || (parentNode.nextSibling.nodeType === Node.TEXT_NODE && !parentNode.nextSibling.textContent);
 

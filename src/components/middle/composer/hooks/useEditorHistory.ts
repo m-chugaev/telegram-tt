@@ -19,6 +19,7 @@ type HistoryEntry = {
   selection?: {
     path: number[];
     offset: number;
+    isRoot: boolean;
   };
 };
 
@@ -30,6 +31,7 @@ type EditorHistory = {
 
 function useEditorHistory(
   inputRef: RefObject<HTMLDivElement | null>,
+  getSelectionRange: Signal<Range | undefined>,
   getHtml: Signal<string>,
   setHtml: (html: string) => void,
 ) {
@@ -41,6 +43,20 @@ function useEditorHistory(
     currentIndex: 0,
     maxEntries: DEFAULT_MAX_ENTRIES,
   });
+
+  const getRootLengthOffset = (root: Node | null, offset: number): number => {
+    if (!root) return 0;
+
+    let currentIndex = 0;
+    let length = 0;
+
+    while (currentIndex < offset) {
+      length += root.childNodes[currentIndex]?.textContent?.length ?? 0;
+      currentIndex++;
+    }
+
+    return length;
+  };
 
   const getNodePath = (node: Node | null, root: Node | null): number[] => {
     if (!node || !root || !root.contains(node) || node === root) return [];
@@ -73,35 +89,63 @@ function useEditorHistory(
     return current;
   };
 
-  const getSelectionRange = useLastCallback(() => {
-    const selection = window.getSelection();
-    if (!selection || !selection.anchorNode) return undefined;
+  const getSelection = useCallback(() => {
+    const selection = getSelectionRange();
+    if (!selection) return undefined;
 
-    const path = getNodePath(selection.anchorNode, inputRef.current);
+    const isRoot = selection.endContainer === inputRef.current;
+    if (isRoot) {
+      return {
+        path: [],
+        offset: getRootLengthOffset(inputRef.current, selection.endOffset),
+        isRoot,
+      };
+    }
+
+    const path = getNodePath(selection.endContainer, inputRef.current);
 
     return {
       path,
-      offset: selection.anchorOffset,
+      offset: selection.endOffset,
+      isRoot,
     };
+  }, [getSelectionRange, inputRef]);
+
+  const setSelectionToEnd = useLastCallback(() => {
+    const selection = window.getSelection();
+    if (!selection || !inputRef.current || !inputRef.current.lastChild) return;
+
+    const newRange = document.createRange();
+    newRange.setStartAfter(inputRef.current.lastChild as Node);
+    selection.removeAllRanges();
+    selection.addRange(newRange);
   });
 
-  const setSelection = useLastCallback((path: number[], offset: number) => {
-    const selection = window.getSelection();
-    if (!selection || !inputRef.current) return;
+  const updateSelection = useLastCallback((selection: { path: number[]; offset: number; isRoot: boolean }) => {
+    if (!inputRef.current) return;
 
-    const node = findNodeByPath(inputRef.current, path);
-    if ((path.length === 0 || !node) && inputRef.current.lastChild) {
-      const newRange = document.createRange();
-      newRange.setStartAfter(inputRef.current.lastChild);
-      selection.removeAllRanges();
-      selection.addRange(newRange);
+    if (!selection.isRoot && selection.path.length === 0 && selection.offset === 0 && inputRef.current.lastChild) {
+      setSelectionToEnd();
       return;
     }
 
-    if (!node) return;
+    if (selection.isRoot && inputRef.current.firstChild) {
+      try {
+        window.getSelection()?.setPosition(inputRef.current.firstChild, selection.offset);
+      } catch {
+        setSelectionToEnd();
+      }
+      return;
+    }
+
+    const node = findNodeByPath(inputRef.current, selection.path);
+    if (!node) {
+      setSelectionToEnd();
+      return;
+    }
 
     try {
-      selection.setPosition(node, offset);
+      window.getSelection()?.setPosition(node, selection.offset);
     } catch {
       //
     }
@@ -111,7 +155,7 @@ function useEditorHistory(
     setHtml(entry.html);
     requestNextMutation(() => {
       if (entry.selection) {
-        setSelection(entry.selection.path, entry.selection.offset);
+        updateSelection(entry.selection);
       }
     });
   });
@@ -128,6 +172,7 @@ function useEditorHistory(
     setHistory((prev) => {
       const lastEntry = prev.entries[prev.currentIndex];
       const currentHtml = getHtml();
+      const selection = getSelection();
 
       if (currentHtml !== lastEntry.html) {
         setEntry(lastEntry);
@@ -137,7 +182,7 @@ function useEditorHistory(
           entries: [...prev.entries.slice(0, prev.currentIndex + 1), {
             html: currentHtml,
             timestamp: Date.now(),
-            selection: getSelectionRange(),
+            selection,
           }],
         };
       }
@@ -153,7 +198,7 @@ function useEditorHistory(
         currentIndex: prev.currentIndex - 1,
       };
     });
-  }, [getHtml, getSelectionRange, setEntry]);
+  }, [getHtml, getSelection, setEntry]);
 
   const redo = useCallback(() => {
     setHistory((prev) => {
@@ -168,7 +213,7 @@ function useEditorHistory(
     });
   }, [setEntry]);
 
-  const saveState = useLastCallback((html: string) => {
+  const saveState = useCallback((html: string) => {
     setHistory((prev) => {
       // Prevent saving the same state twice
       const lastEntry = prev.entries[prev.currentIndex];
@@ -178,7 +223,7 @@ function useEditorHistory(
       newEntries.push({
         html,
         timestamp: Date.now(),
-        selection: getSelectionRange(),
+        selection: getSelection(),
       });
 
       // Limit the number of entries
@@ -192,7 +237,7 @@ function useEditorHistory(
         currentIndex: newEntries.length - 1,
       };
     });
-  });
+  }, [getSelection]);
 
   const processKeyboardShortcuts = useCallback((e: React.KeyboardEvent) => {
     if (!(e.ctrlKey || e.metaKey)) {
